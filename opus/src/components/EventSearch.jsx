@@ -106,7 +106,7 @@ const EventSearch = () => {
                         gap: '16px',
                         overflowX: 'auto',
                         paddingRight: '24px',
-                        paddingBottom: '8px',
+                        paddingBottom: '1px',
                         scrollbarWidth: 'none',
                         msOverflowStyle: 'none'
                     }}>
@@ -130,21 +130,6 @@ const EventSearch = () => {
                                     alt={event.title}
                                     style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                                 />
-                                <div style={{
-                                    position: 'absolute',
-                                    top: '12px',
-                                    right: '12px',
-                                    background: 'rgba(255,255,255,0.3)',
-                                    backdropFilter: 'blur(8px)',
-                                    borderRadius: '50%',
-                                    width: '32px',
-                                    height: '32px',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center'
-                                }}>
-                                    <Bell size={16} color="white" fill="white" />
-                                </div>
                                 <div style={{
                                     position: 'absolute',
                                     bottom: 0,

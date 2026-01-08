@@ -13,6 +13,7 @@ import Profile from './components/Profile';
 import CreateEvent from './components/CreateEvent';
 import EventDetail from './components/EventDetail';
 import EventSearch from './components/EventSearch';
+import SocialPage from './components/SocialPage';
 
 
 function Navigation() {
@@ -73,8 +74,8 @@ function Navigation() {
         paddingBottom: '10px'
       }}>
         {/* Left Side */}
-        <NavItem to="/" icon={Home} label="Accueil" />
         <NavItem to="/search" icon={Search} label="Explorer" />
+        <NavItem to="/" icon={MessageCircle} label="Messages" />
 
         {/* Middle Spacer for Pulse Button */}
         <div style={{ width: '60px' }}></div>
@@ -118,7 +119,7 @@ function AnimatedRoutes() {
   return (
     <AnimatePresence mode="wait">
       <Routes location={location} key={location.pathname}>
-        <Route path="/" element={<EventList />} />
+        <Route path="/" element={<SocialPage />} />
         <Route path="/search" element={<EventSearch />} />
         <Route path="/calendar" element={<EventList />} />
         <Route path="/create" element={<CreateEvent />} />
