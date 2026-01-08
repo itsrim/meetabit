@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useEvents } from '../context/EventContext';
-import { ArrowLeft, MapPin, Clock, Send, Users, CheckCircle, Plus, Scan } from 'lucide-react';
-import QRCode from 'qrcode';
-import { toast } from 'sonner';
+import { ArrowLeft, MapPin, Clock, Share2, Heart, MessageCircle } from 'lucide-react';
 import PageTransition from './PageTransition';
+import { toast } from 'sonner';
 
 // Mock Participants Data
 const MOCK_PARTICIPANTS = [
@@ -21,233 +20,261 @@ const EventDetail = () => {
 
     const event = events.find(e => e.id.toString() === id);
 
-    const [showQr, setShowQr] = useState(false);
-    const [qrUrl, setQrUrl] = useState('');
-
-    React.useEffect(() => {
-        if (showQr && event?.registered && !event?.isOrganizer) {
-            QRCode.toDataURL(`ticket-${event.id}-user-123`).then(setQrUrl);
-        }
-    }, [showQr, event]);
-
     if (!event) return <div className="p-4">Événement non trouvé</div>;
 
-    const handleShare = (e) => {
-        e.stopPropagation();
-        toast.success("Lien copié dans le presse-papier !");
+    const handleShare = () => {
+        toast.success("Lien partagé !");
     };
 
     const handleRegistration = () => {
         toggleRegistration(event.id);
         if (!event.registered) {
-            toast.success("Hâte de vous voir ! 🥳");
+            toast.success("Inscription confirmée !");
         } else {
-            toast("Vous êtes désinscrit.", { icon: '😢' });
+            toast.info("Désinscription prise en compte");
         }
     };
 
     return (
         <PageTransition>
-            <div className="pb-24 bg-white min-h-screen">
-                {/* Header Image */}
-                <div className="relative h-80 w-full">
+            <div style={{ background: 'var(--color-surface)', minHeight: '100vh', position: 'relative', paddingBottom: '90px' }}>
+
+                {/* 1. Header Image Area */}
+                <div style={{ position: 'relative', height: '350px', width: '100%' }}>
                     <img
                         src={event.image}
                         alt={event.title}
-                        className="w-full h-full object-cover"
+                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                     />
-                    {/* Glassmorphic Back Button: Fixed Position Top Left */}
-                    <button
-                        onClick={() => navigate(-1)}
-                        style={{
-                            position: 'absolute',
-                            top: '20px',
-                            left: '20px',
-                            zIndex: 50,
-                            background: 'rgba(255,255,255,0.85)',
-                            backdropFilter: 'blur(12px)',
-                            WebkitBackdropFilter: 'blur(12px)',
-                            width: '44px',
-                            height: '44px',
-                            borderRadius: '50%',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-                            border: '1px solid rgba(255,255,255,0.6)'
-                        }}
-                        className="transition-transform active:scale-95"
-                    >
-                        <ArrowLeft size={22} color="#18181b" strokeWidth={2.5} />
-                    </button>
 
-                    {/* Glassmorphic Share Button: Fixed Position Top Right */}
-                    <button
-                        onClick={handleShare}
-                        style={{
-                            position: 'absolute',
-                            top: '20px',
-                            right: '20px',
-                            zIndex: 50,
-                            background: 'rgba(255,255,255,0.85)',
-                            backdropFilter: 'blur(12px)',
-                            WebkitBackdropFilter: 'blur(12px)',
-                            width: '44px',
-                            height: '44px',
-                            borderRadius: '50%',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-                            border: '1px solid rgba(255,255,255,0.6)'
-                        }}
-                        className="transition-transform active:scale-95"
-                    >
-                        <Send size={20} color="var(--color-primary)" strokeWidth={2.5} style={{ marginLeft: '-2px', marginTop: '2px' }} />
-                    </button>
+                    {/* Header Icons Overlay */}
+                    <div style={{
+                        position: 'absolute',
+                        top: '0',
+                        left: '0',
+                        right: '0',
+                        padding: '20px',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'flex-start',
+                        zIndex: 50
+                    }}>
+                        <button
+                            onClick={() => navigate(-1)}
+                            style={{
+                                width: '40px',
+                                height: '40px',
+                                background: 'white',
+                                borderRadius: '50%',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                            }}
+                        >
+                            <ArrowLeft size={20} color="black" />
+                        </button>
+
+                        <div style={{ display: 'flex', gap: '12px' }}>
+                            <button
+                                onClick={handleShare}
+                                style={{
+                                    width: '40px',
+                                    height: '40px',
+                                    background: 'white',
+                                    borderRadius: '50%',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                                }}
+                            >
+                                <Share2 size={18} color="black" />
+                            </button>
+                            <button
+                                style={{
+                                    width: '40px',
+                                    height: '40px',
+                                    background: 'white',
+                                    borderRadius: '50%',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                                }}
+                            >
+                                <Heart size={20} color="black" />
+                            </button>
+                        </div>
+                    </div>
                 </div>
 
-                {/* Content Container */}
-                <div className="bg-white -mt-10 relative z-10 px-6 pt-8 pb-10"
-                    style={{
-                        borderTopLeftRadius: '32px',
-                        borderTopRightRadius: '32px',
-                        boxShadow: '0 -10px 40px rgba(0,0,0,0.05)'
+                {/* 2. Overlapping Content Card */}
+                <div style={{
+                    position: 'relative',
+                    marginTop: '-40px',
+                    background: 'var(--color-surface)',
+                    borderTopLeftRadius: '32px',
+                    borderTopRightRadius: '32px',
+                    padding: '32px 24px',
+                    minHeight: '500px',
+                    zIndex: 10
+                }}>
+                    <h1 style={{
+                        fontSize: '28px',
+                        fontWeight: '800',
+                        lineHeight: '1.2',
+                        marginBottom: '16px',
+                        color: 'var(--color-text)'
                     }}>
+                        {event.title}
+                    </h1>
 
-                    {/* Handle Bar */}
-                    <div style={{ width: '40px', height: '4px', background: '#e4e4e7', borderRadius: '10px', margin: '0 auto 24px' }}></div>
-
-                    <h1 className="font-bold mb-4" style={{ fontSize: '1.75rem', lineHeight: '1.2', color: '#18181b' }}>{event.title}</h1>
-
-                    {/* Meta Info Row */}
-                    <div className="flex items-center gap-3 mb-8">
-                        <div className="flex items-center gap-2 px-3 py-1.5 bg-indigo-50 rounded-full text-primary font-bold text-xs">
-                            <Clock size={14} />
-                            <span>{event.time}</span>
-                        </div>
-                        <span className="text-muted text-sm font-medium">
-                            {event.date.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}
-                        </span>
+                    {/* Price & Count Row */}
+                    <div style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        marginBottom: '32px',
+                        color: 'var(--color-text-muted)',
+                        fontSize: '15px',
+                        fontWeight: '500'
+                    }}>
+                        <span>10.00€ / personne</span>
+                        <span>{event.attendees} participants</span>
                     </div>
 
-                    <div className="flex items-start gap-4 mb-10">
-                        <div
-                            className="flex items-center justify-center flex-shrink-0"
-                            style={{
-                                width: '56px', height: '56px',
-                                background: '#f4f4f5',
-                                borderRadius: '50%',
-                                color: '#18181b'
-                            }}>
-                            <MapPin size={24} />
+                    {/* Info Rows */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '32px' }}>
+                        <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+                            <div style={{ width: '40px', display: 'flex', justifyContent: 'center' }}>
+                                <MapPin size={24} style={{ color: 'var(--color-text-muted)' }} />
+                            </div>
+                            <div>
+                                <div style={{ fontWeight: '500', color: 'var(--color-text-muted)' }}>{event.location}</div>
+                            </div>
                         </div>
-                        <div>
-                            <h3 className="font-bold text-lg mb-1">Lieu</h3>
-                            <p className="text-gray-600 text-base leading-snug">{event.location}</p>
-                            <p className="text-xs text-muted mt-1 font-medium">12km de votre position</p>
+                        <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+                            <div style={{ width: '40px', display: 'flex', justifyContent: 'center' }}>
+                                <Clock size={24} style={{ color: 'var(--color-text-muted)' }} />
+                            </div>
+                            <div>
+                                <div style={{ fontWeight: '500', color: 'var(--color-text-muted)' }}>
+                                    {event.date.toLocaleDateString('fr-FR', { month: 'long', day: 'numeric' })}, {event.time}
+                                </div>
+                            </div>
                         </div>
                     </div>
 
-                    <div className="mb-10">
-                        <h3 className="font-bold text-lg mb-3">À propos</h3>
-                        <p className="text-gray-500 leading-relaxed text-base">
+                    {/* Description */}
+                    <div style={{ marginBottom: '32px' }}>
+                        <p style={{ lineHeight: '1.6', color: 'var(--color-text-muted)', fontSize: '15px' }}>
                             {event.description}
                             <br /><br />
-                            Rejoignez-nous pour ce moment unique qui promet d'être mémorable. N'oubliez pas de venir 10 minutes en avance pour profiter pleinement de l'expérience !
+                            Un tournoi hebdomadaire où vous pouvez gagner de l'expérience en affrontant des adversaires de votre niveau. C'est une super opportunité de garder la forme !
                         </p>
                     </div>
 
-                    <div>
-                        <div className="flex justify-between items-center mb-5">
-                            <h3 className="font-bold text-lg">Participants <span className="text-muted font-normal text-base">({event.attendees})</span></h3>
-                            <button className="text-primary text-sm font-bold active:opacity-70">Voir tout</button>
+                    {/* Participants - Restored */}
+                    <div style={{ marginBottom: '32px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                            <h3 style={{ fontWeight: '700', fontSize: '18px', color: 'var(--color-text)' }}>Participants</h3>
+                            <button style={{ color: 'var(--color-primary)', fontSize: '14px', fontWeight: '600' }}>Voir tout</button>
                         </div>
 
-                        <div className="space-y-4">
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                             {MOCK_PARTICIPANTS.map(p => (
-                                <div key={p.id} className="flex items-center gap-4">
+                                <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                                     <img
                                         src={p.avatar}
-                                        style={{ width: '48px', height: '48px', borderRadius: '50%', objectFit: 'cover' }}
+                                        style={{ width: '48px', height: '48px', borderRadius: '50%', objectFit: 'cover', border: '1px solid var(--color-border)' }}
                                         alt={p.name}
-                                        className="shadow-sm border border-gray-100"
                                     />
-                                    <div className="flex-1">
-                                        <p className="font-bold text-gray-900">{p.name}</p>
-                                        <div className="flex items-center gap-2 mt-1">
-                                            <div style={{ width: '80px', height: '6px', background: '#f4f4f5', borderRadius: '10px' }}>
+                                    <div style={{ flex: 1 }}>
+                                        <p style={{ fontWeight: '700', color: 'var(--color-text)', marginBottom: '4px' }}>{p.name}</p>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                            <div style={{ width: '80px', height: '6px', background: 'var(--color-border)', borderRadius: '10px' }}>
                                                 <div style={{ height: '100%', background: 'var(--color-success)', borderRadius: '10px', width: `${(p.score / 5) * 100}%` }}></div>
                                             </div>
-                                            <span className="text-xs font-bold text-gray-500">{p.score}</span>
+                                            <span style={{ fontSize: '12px', fontWeight: '700', color: 'var(--color-text-muted)' }}>{p.score}</span>
                                         </div>
                                     </div>
-                                    {p.id === 4 && <span className="px-3 py-1 bg-amber-50 text-amber-600 text-xs rounded-full font-bold border border-amber-100">Hôte</span>}
                                 </div>
                             ))}
                         </div>
                     </div>
-                </div>
 
-                {/* Floating Bottom Bar */}
-                <div
-                    className="fixed bottom-0 left-0 right-0 p-4 bg-white/80 backdrop-blur-xl border-t flex gap-3 items-center justify-center mx-auto z-50"
-                    style={{ maxWidth: '430px', borderTop: '1px solid rgba(0,0,0,0.05)' }}
-                >
-                    {event.isOrganizer ? (
-                        <button
-                            onClick={() => setShowQr(!showQr)}
-                            className="btn btn-primary w-full flex justify-center items-center gap-2 py-3.5 text-base shadow-lg shadow-indigo-500/30"
-                        >
-                            <Scan size={20} /> Scanner les billets
-                        </button>
-                    ) : (
-                        <>
-                            {event.registered && (
-                                <button
-                                    onClick={() => setShowQr(!showQr)}
-                                    className="btn flex items-center justify-center p-3.5 bg-gray-100 text-gray-900 rounded-xl hover:bg-gray-200 transition-colors"
-                                    style={{ aspectRatio: '1/1' }}
-                                >
-                                    <QrCode size={24} />
-                                </button>
-                            )}
-                            <button
-                                onClick={handleRegistration}
-                                className="btn w-full flex justify-center items-center gap-2 py-3.5 text-base shadow-lg shadow-indigo-500/20 active:scale-95 transition-transform"
-                                style={event.registered ? { background: '#ecfdf5', color: '#059669', border: '1px solid #d1fae5', boxShadow: 'none' } : { background: 'var(--color-primary)', color: 'white' }}
-                            >
-                                {event.registered ? <CheckCircle size={20} /> : <Plus size={20} />}
-                                {event.registered ? 'Vous participez' : "S'inscrire à l'événement"}
-                            </button>
-                        </>
-                    )}
-                </div>
-
-                {/* QR Overlay */}
-                {showQr && (
-                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" onClick={() => setShowQr(false)}>
-                        <div
-                            className="bg-white p-8 rounded-3xl w-full max-w-sm text-center shadow-2xl transform transition-all scale-100"
-                            onClick={e => e.stopPropagation()}
-                        >
-                            <h3 className="font-bold text-2xl mb-6 text-gray-900">{event.isOrganizer ? 'Scanner' : 'Votre Billet'}</h3>
-                            {event.isOrganizer ? (
-                                <div className="bg-gray-900 text-white h-72 rounded-2xl flex items-center justify-center mb-6">
-                                    <div className="text-center opacity-70">
-                                        <Scan size={48} className="mx-auto mb-2" />
-                                        <p>Caméra active...</p>
-                                    </div>
-                                </div>
-                            ) : (
-                                <div className="flex justify-center my-6 p-4 bg-white border-2 border-dashed border-gray-200 rounded-xl">
-                                    <img src={qrUrl} alt="QR" className="w-56 h-56" />
-                                </div>
-                            )}
-                            <button onClick={() => setShowQr(false)} className="mt-2 text-primary font-bold px-6 py-2 rounded-full hover:bg-gray-50 transition-colors">Fermer</button>
-                        </div>
+                    {/* Registration Warning */}
+                    <div style={{ marginBottom: '24px', fontSize: '14px', color: 'var(--color-text)', fontWeight: '500' }}>
+                        Les inscriptions se terminent 15 minutes avant le début de l'événement !
                     </div>
-                )}
+
+                    {/* Map Placeholder */}
+                    <div style={{
+                        width: '100%',
+                        height: '120px',
+                        borderRadius: '16px',
+                        background: 'url(https://images.unsplash.com/photo-1524661135-423995f22d0b?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80) center/cover',
+                        position: 'relative',
+                        overflow: 'hidden'
+                    }}>
+                        <div style={{ position: 'absolute', width: '100%', height: '100%', background: 'rgba(0,0,0,0.1)' }}></div>
+                    </div>
+                </div>
+
+                {/* 3. Bottom Action Bar */}
+                <div style={{
+                    position: 'fixed',
+                    bottom: '0',
+                    left: '50%',
+                    transform: 'translateX(-50%)',
+                    width: '100%',
+                    maxWidth: '430px',
+                    background: 'var(--color-surface)',
+                    borderTop: '1px solid var(--color-border)',
+                    padding: '16px 24px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '16px',
+                    zIndex: 100
+                }}>
+                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                        <span style={{ fontWeight: '800', fontSize: '18px', color: 'var(--color-text)' }}>10.00€</span>
+                        <span style={{ fontSize: '12px', color: 'var(--color-text-muted)' }}>/ personne</span>
+                    </div>
+
+                    <button style={{
+                        width: '50px',
+                        height: '50px',
+                        borderRadius: '12px',
+                        border: '1px solid var(--color-border)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        background: 'transparent',
+                        flexShrink: 0
+                    }}>
+                        <MessageCircle size={24} color="var(--color-text)" />
+                    </button>
+
+                    <button
+                        onClick={handleRegistration}
+                        className="btn-primary"
+                        style={{
+                            flex: 1,
+                            height: '50px',
+                            borderRadius: '12px',
+                            fontSize: '16px',
+                            fontWeight: '600',
+                            background: event.registered ? 'var(--color-surface-hover)' : '#be185d',
+                            border: event.registered ? '1px solid var(--color-border)' : 'none',
+                            color: event.registered ? 'var(--color-text)' : 'white'
+                        }}
+                    >
+                        {event.registered ? 'Inscrit ✔' : "S'inscrire"}
+                    </button>
+                </div>
+
             </div>
         </PageTransition>
     );

@@ -1,19 +1,24 @@
 :root {
-  /* Colors - Premium/Modern Palette */
-  --color-primary: #6366f1;
-  /* Indigo 500 */
-  --color-primary-dark: #4f46e5;
-  --color-secondary: #ec4899;
-  /* Pink 500 */
-  --color-background: #f4f4f5;
-  /* Zinc 100 */
-  --color-surface: #ffffff;
-  --color-text: #18181b;
+  /* Default to Dark Mode */
+  --color-primary: #818cf8;
+  /* Light Indigo for dark mode contrast */
+  --color-primary-dark: #6366f1;
+  --color-secondary: #f472b6;
+
+  --color-background: #09090b;
+  /* Zinc 950 */
+  --color-surface: #18181b;
   /* Zinc 900 */
-  --color-text-muted: #71717a;
-  /* Zinc 500 */
-  --color-border: #e4e4e7;
-  /* Zinc 200 */
+  --color-surface-hover: #27272a;
+
+  --color-text: #f4f4f5;
+  /* Zinc 100 */
+  --color-text-muted: #a1a1aa;
+  /* Zinc 400 */
+  --color-text-inverted: #18181b;
+
+  --color-border: #27272a;
+  /* Zinc 800 */
   --color-success: #22c55e;
 
   /* Layout */
@@ -23,12 +28,37 @@
   --radius-sm: 8px;
 
   /* Shadows */
-  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
-  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
 
   /* Typography */
   --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+[data-theme="light"] {
+  --color-primary: #6366f1;
+  /* Normal Indigo */
+  --color-primary-dark: #4f46e5;
+  --color-secondary: #ec4899;
+
+  --color-background: #f4f4f5;
+  /* Zinc 100 */
+  --color-surface: #ffffff;
+  --color-surface-hover: #f4f4f5;
+
+  --color-text: #18181b;
+  /* Zinc 900 */
+  --color-text-muted: #71717a;
+  /* Zinc 500 */
+  --color-text-inverted: #ffffff;
+
+  --color-border: #e4e4e7;
+  /* Zinc 200 */
+
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
 }
 
 * {
@@ -40,7 +70,7 @@
 body {
   font-family: var(--font-sans);
   background-color: #111;
-  /* Dark background outside the app phone view */
+  /* Outer background */
   color: var(--color-text);
   display: flex;
   justify-content: center;
