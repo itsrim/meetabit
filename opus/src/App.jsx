@@ -12,7 +12,7 @@ import EventList from './components/EventList';
 import Profile from './components/Profile';
 import CreateEvent from './components/CreateEvent';
 import EventDetail from './components/EventDetail';
-
+import EventSearch from './components/EventSearch';
 
 
 function Navigation() {
@@ -30,7 +30,7 @@ function Navigation() {
         flexDirection: 'column',
         alignItems: 'center',
         textDecoration: 'none',
-        color: active ? '#be185d' : 'var(--color-text-muted)', // Active pinkish to match button or primary
+        color: active ? '#be185d' : 'var(--color-text-muted)',
         gap: '4px',
         flex: 1,
         zIndex: 1
@@ -51,7 +51,7 @@ function Navigation() {
       maxWidth: 'var(--max-width)',
       height: '80px',
       zIndex: 100,
-      pointerEvents: 'none', // wrapper shouldn't block, children will re-enable
+      pointerEvents: 'none',
     }}>
       {/* Curved Background Shape */}
       <div style={{
@@ -62,38 +62,32 @@ function Navigation() {
         height: '70px',
         background: 'var(--color-surface)',
         borderTop: '1px solid var(--color-border)',
-        borderTopLeftRadius: '20px', // Optional: rounded corners for the bar itself if floating
+        borderTopLeftRadius: '20px',
         borderTopRightRadius: '20px',
         boxShadow: '0 -4px 20px rgba(0,0,0,0.05)',
         pointerEvents: 'auto',
-        // The Cutout Logic:
-        // We can use a mask or SVG. For simplicity in React inline styles, 
-        // a radial-gradient mask is tricky for borders.
-        // Let's use a simpler "floating button above bar" approach first which is safer 
-        // and looks 95% identical without complex SVG handling in JSX.
-        // If user insists on negative space, we'd need an SVG path.
         display: 'flex',
         justifyContent: 'space-between',
         padding: '0 10px',
         alignItems: 'center',
-        paddingBottom: '10px' // adjust for safe area
+        paddingBottom: '10px'
       }}>
         {/* Left Side */}
-        <NavItem to="/" icon={Search} label="Search" />
-        <NavItem to="/calendar" icon={Calendar} label="Calendar" />
+        <NavItem to="/" icon={Home} label="Accueil" />
+        <NavItem to="/search" icon={Search} label="Explorer" />
 
         {/* Middle Spacer for Pulse Button */}
         <div style={{ width: '60px' }}></div>
 
         {/* Right Side */}
-        <NavItem to="/messages" icon={MessageCircle} label="Messages" />
-        <NavItem to="/profile" icon={User} label="Profile" />
+        <NavItem to="/calendar" icon={Calendar} label="Agenda" />
+        <NavItem to="/profile" icon={User} label="Profil" />
       </div>
 
       {/* Floating Action Button (FAB) */}
       <div style={{
         position: 'absolute',
-        bottom: '25px', // Lifted up to sit on the edge
+        bottom: '25px',
         left: '50%',
         transform: 'translateX(-50%)',
         pointerEvents: 'auto'
@@ -102,13 +96,13 @@ function Navigation() {
           width: '60px',
           height: '60px',
           borderRadius: '50%',
-          background: '#be185d', // The specific pink/red from screenshot
+          background: '#be185d',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           color: 'white',
           boxShadow: '0 4px 15px rgba(190, 24, 93, 0.4)',
-          border: '4px solid var(--color-background)', // HACK: Pseudo-cutout using border matching bg
+          border: '4px solid var(--color-background)',
         }}>
           <Plus size={32} />
         </Link>
@@ -125,6 +119,8 @@ function AnimatedRoutes() {
     <AnimatePresence mode="wait">
       <Routes location={location} key={location.pathname}>
         <Route path="/" element={<EventList />} />
+        <Route path="/search" element={<EventSearch />} />
+        <Route path="/calendar" element={<EventList />} />
         <Route path="/create" element={<CreateEvent />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/event/:id" element={<EventDetail />} />
