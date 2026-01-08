@@ -184,7 +184,9 @@ const SocialPage = () => {
                                 background: 'transparent', border: 'none', padding: 0,
                                 fontSize: '18px', fontWeight: activeTab === 'suggestions' ? '800' : '600',
                                 color: activeTab === 'suggestions' ? '#111827' : '#9ca3af',
-                                transition: 'color 0.2s'
+                                transition: 'color 0.2s',
+                                paddingBottom: '8px',
+                                borderBottom: activeTab === 'suggestions' ? '3px solid #111827' : '3px solid transparent'
                             }}
                         >
                             Suggestions
@@ -196,7 +198,9 @@ const SocialPage = () => {
                                 fontSize: '18px', fontWeight: activeTab === 'messages' ? '800' : '600',
                                 color: activeTab === 'messages' ? '#111827' : '#9ca3af',
                                 transition: 'color 0.2s',
-                                display: 'flex', alignItems: 'center', gap: '6px'
+                                display: 'flex', alignItems: 'center', gap: '6px',
+                                paddingBottom: '8px',
+                                borderBottom: activeTab === 'messages' ? '3px solid #111827' : '3px solid transparent'
                             }}
                         >
                             Messages
