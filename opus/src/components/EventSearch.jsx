@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, Bell, MapPin, SlidersHorizontal } from 'lucide-react';
+import { Search, Bell, SlidersHorizontal, MapPin } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useEvents } from '../context/EventContext';
 import PageTransition from './PageTransition';
@@ -20,11 +20,11 @@ const EventSearch = () => {
         <PageTransition>
             <div style={{ minHeight: '100vh', background: '#f9f9f9', paddingBottom: '100px' }}>
 
-                {/* NEW HEADER */}
+                {/* NEW HEADER - Compact */}
                 <div style={{
                     flexShrink: 0,
-                    background: 'linear-gradient(135deg, #73f755ff 0%, #4649efff 50%, #ec4899 100%)', // Purple to Pink gradient
-                    padding: '12px 24px 24px',
+                    background: 'linear-gradient(135deg, #73f755ff 0%, #4649efff 50%, #ec4899 100%)',
+                    padding: '16px 20px 20px',
                     borderBottomLeftRadius: '30px',
                     borderBottomRightRadius: '30px',
                     color: 'white',
@@ -32,70 +32,64 @@ const EventSearch = () => {
                     zIndex: 10,
                     marginBottom: '12px'
                 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px' }}>
-                        <div>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', opacity: 0.9, marginBottom: '4px' }}>
-                                <MapPin size={14} color="white" />
-                                <span style={{ fontSize: '12px', fontWeight: '500' }}>Événements autour de moi</span>
-                            </div>
-                            <h1 style={{ fontSize: '24px', fontWeight: '800', letterSpacing: '-0.5px' }}>Paris, France</h1>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        {/* Search Input */}
+                        <div style={{
+                            flex: 1,
+                            background: 'rgba(255,255,255,0.15)',
+                            backdropFilter: 'blur(10px)',
+                            border: '1px solid rgba(255,255,255,0.2)',
+                            borderRadius: '20px',
+                            padding: '10px 16px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '12px',
+                        }}>
+                            <Search size={20} color="rgba(255,255,255,0.8)" />
+                            <input
+                                type="text"
+                                placeholder="Rechercher un événement..."
+                                style={{
+                                    border: 'none',
+                                    outline: 'none',
+                                    flex: 1,
+                                    fontSize: '15px',
+                                    background: 'transparent',
+                                    color: 'white'
+                                }}
+                                className="search-input-placeholder-white"
+                            />
+                            <button style={{
+                                background: 'rgba(255,255,255,0.2)',
+                                borderRadius: '50%',
+                                width: '32px',
+                                height: '32px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                border: 'none',
+                                cursor: 'pointer'
+                            }}>
+                                <SlidersHorizontal size={16} color="white" />
+                            </button>
                         </div>
+                        {/* Bell Button - Outside input */}
                         <button style={{
                             background: 'rgba(255,255,255,0.2)',
                             backdropFilter: 'blur(10px)',
                             border: '1px solid rgba(255,255,255,0.3)',
                             borderRadius: '50%',
-                            width: '44px',
-                            height: '44px',
+                            width: '48px',
+                            height: '48px',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            cursor: 'pointer'
+                            cursor: 'pointer',
+                            position: 'relative',
+                            flexShrink: 0
                         }}>
-                            <div style={{ position: 'relative' }}>
-                                <Bell size={20} color="white" />
-                                <div style={{ position: 'absolute', top: 0, right: 0, width: '8px', height: '8px', background: '#facc15', borderRadius: '50%', border: '2px solid #d946ef' }}></div>
-                            </div>
-                        </button>
-                    </div>
-
-                    <div style={{
-                        background: 'rgba(255,255,255,0.15)',
-                        backdropFilter: 'blur(10px)',
-                        border: '1px solid rgba(255,255,255,0.2)',
-                        borderRadius: '20px',
-                        padding: '12px 16px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '12px',
-                    }}>
-                        <Search size={20} color="rgba(255,255,255,0.8)" />
-                        <input
-                            type="text"
-                            placeholder="Rechercher un événement..."
-                            style={{
-                                border: 'none',
-                                outline: 'none',
-                                flex: 1,
-                                fontSize: '15px',
-                                background: 'transparent',
-                                color: 'white',
-                                '::placeholder': { color: 'rgba(255,255,255,0.6)' }
-                            }}
-                            className="search-input-placeholder-white"
-                        />
-                        <button style={{
-                            background: 'rgba(255,255,255,0.2)',
-                            borderRadius: '50%',
-                            width: '32px',
-                            height: '32px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            border: 'none',
-                            cursor: 'pointer'
-                        }}>
-                            <SlidersHorizontal size={16} color="white" />
+                            <Bell size={20} color="white" />
+                            <div style={{ position: 'absolute', top: '10px', right: '10px', width: '10px', height: '10px', background: '#facc15', borderRadius: '50%', border: '2px solid rgba(255,255,255,0.5)' }}></div>
                         </button>
                     </div>
                 </div>

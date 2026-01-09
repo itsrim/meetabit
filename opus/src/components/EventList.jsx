@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import CalendarStrip from './CalendarStrip';
-import { MapPin, Clock, Users, Send, CheckCircle, Plus, Scan } from 'lucide-react';
+import { MapPin, Clock, Users, Send, CheckCircle, Plus, Scan, Heart } from 'lucide-react';
 import { useEvents } from '../context/EventContext';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -9,10 +9,11 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Virtuoso } from 'react-virtuoso';
 import BlurImage from './BlurImage';
 
-const EventCard = ({ event, onToggle, isLast }) => {
+const EventCard = ({ event, onToggle, onToggleFavorite, isLast }) => {
     const navigate = useNavigate();
     const isRegistered = event.registered;
     const isOrganizer = event.isOrganizer;
+    const isFavorite = event.favorite;
 
     const handleCardClick = () => {
         navigate(`/event/${event.id}`);
@@ -25,6 +26,16 @@ const EventCard = ({ event, onToggle, isLast }) => {
             toast.success("Inscription réussie ! 🎟️");
         } else {
             toast('Désinscription prise en compte.', { icon: '👋' });
+        }
+    };
+
+    const handleFavoriteClick = (e) => {
+        e.stopPropagation();
+        onToggleFavorite(event.id);
+        if (!isFavorite) {
+            toast.success("Ajouté aux favoris ❤️");
+        } else {
+            toast("Retiré des favoris", { icon: '💔' });
         }
     };
 
@@ -44,6 +55,31 @@ const EventCard = ({ event, onToggle, isLast }) => {
                         src={event.image || "https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?auto=format&fit=crop&w=800&q=80"}
                         alt={event.title}
                     />
+                    {/* Bouton favori */}
+                    <button
+                        onClick={handleFavoriteClick}
+                        style={{
+                            position: 'absolute',
+                            top: '6px',
+                            right: '6px',
+                            background: isFavorite ? '#ec4899' : 'rgba(0,0,0,0.4)',
+                            border: 'none',
+                            borderRadius: '50%',
+                            width: '26px',
+                            height: '26px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s ease'
+                        }}
+                    >
+                        <Heart 
+                            size={14} 
+                            color="white" 
+                            fill={isFavorite ? 'white' : 'transparent'}
+                        />
+                    </button>
                     {/* Prix overlay */}
                     <div style={{
                         position: 'absolute',
@@ -74,7 +110,7 @@ const EventCard = ({ event, onToggle, isLast }) => {
                         }}>
                             {event.title}
                         </h3>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '11px', color: 'var(--color-text-muted)' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '11px', color: 'var(--color-text-muted)' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '3px' }}>
                                 <Clock size={11} />
                                 <span>{event.time}</span>
@@ -88,8 +124,20 @@ const EventCard = ({ event, onToggle, isLast }) => {
                         </div>
                     </div>
 
-                    {/* Bouton compact */}
-                    <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                    {/* Participants + Bouton */}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div style={{ 
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            gap: '4px',
+                            fontSize: '11px',
+                            color: event.attendees >= event.maxAttendees * 0.9 ? '#ef4444' : 'var(--color-text-muted)'
+                        }}>
+                            <Users size={12} />
+                            <span style={{ fontWeight: event.attendees >= event.maxAttendees * 0.9 ? '600' : '400' }}>
+                                {event.attendees}/{event.maxAttendees}
+                            </span>
+                        </div>
                         {isOrganizer ? (
                             <span style={{ 
                                 fontSize: '10px', 
@@ -130,7 +178,7 @@ const EventCard = ({ event, onToggle, isLast }) => {
 };
 
 const EventList = () => {
-    const { events, selectedDate, setSelectedDate, toggleRegistration } = useEvents();
+    const { events, selectedDate, setSelectedDate, toggleRegistration, toggleFavorite } = useEvents();
     const [allItems, setAllItems] = useState([]);
     const [currentVisibleDate, setCurrentVisibleDate] = useState(selectedDate);
     const [initialIndex, setInitialIndex] = useState(0);
@@ -239,6 +287,7 @@ const EventList = () => {
                                 <EventCard
                                     event={item.event}
                                     onToggle={toggleRegistration}
+                                    onToggleFavorite={toggleFavorite}
                                     isLast={index === allItems.length - 1}
                                 />
                             )}

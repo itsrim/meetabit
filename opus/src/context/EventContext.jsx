@@ -30,6 +30,8 @@ const generateMassiveEvents = () => {
         const eventsPerDay = 25 + Math.floor(Math.random() * 15); // 25-40 événements par jour
         
         for (let i = 0; i < eventsPerDay; i++) {
+            const maxAttendees = [20, 30, 50, 75, 100, 150, 200][Math.floor(Math.random() * 7)];
+            const attendees = Math.floor(Math.random() * maxAttendees * 0.95) + 5;
             events.push({
                 id: id++,
                 title: EVENT_TITLES[Math.floor(Math.random() * EVENT_TITLES.length)] + ` #${id}`,
@@ -37,7 +39,8 @@ const generateMassiveEvents = () => {
                 date: new Date(2026, 0, day),
                 time: TIMES[Math.floor(Math.random() * TIMES.length)],
                 location: LOCATIONS[Math.floor(Math.random() * LOCATIONS.length)],
-                attendees: Math.floor(Math.random() * 100) + 5,
+                attendees,
+                maxAttendees,
                 description: `Événement passionnant du ${day} janvier. Rejoignez-nous pour une expérience unique !`,
                 registered: Math.random() > 0.7, // 30% de chance d'être inscrit
                 isOrganizer: Math.random() > 0.9, // 10% de chance d'être organisateur

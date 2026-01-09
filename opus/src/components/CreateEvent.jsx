@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useEvents } from '../context/EventContext';
-import { ArrowLeft, Image as ImageIcon } from 'lucide-react';
+import { ArrowLeft, Image as ImageIcon, Users } from 'lucide-react';
 import PageTransition from './PageTransition';
 import { toast } from 'sonner';
 
@@ -14,7 +14,8 @@ const CreateEvent = () => {
         date: new Date().toISOString().split('T')[0],
         time: '19:00',
         location: '',
-        description: ''
+        description: '',
+        maxAttendees: 50
     });
 
     const handleSubmit = (e) => {
@@ -27,6 +28,7 @@ const CreateEvent = () => {
             location: formData.location || 'Lieu secret',
             description: formData.description,
             attendees: 1, // Me
+            maxAttendees: parseInt(formData.maxAttendees) || 50,
             image: "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=800&q=80" // Default party image
         };
 
@@ -89,14 +91,31 @@ const CreateEvent = () => {
                         </div>
                     </div>
 
-                    <div className="flex flex-col gap-2">
-                        <label className="text-sm font-bold">Lieu</label>
-                        <input
-                            className="card p-3"
-                            value={formData.location}
-                            onChange={e => setFormData({ ...formData, location: e.target.value })}
-                            placeholder="Ex: Parc Monceau"
-                        />
+                    <div className="flex gap-4">
+                        <div className="flex-1 flex flex-col gap-2">
+                            <label className="text-sm font-bold">Lieu</label>
+                            <input
+                                className="card p-3"
+                                value={formData.location}
+                                onChange={e => setFormData({ ...formData, location: e.target.value })}
+                                placeholder="Ex: Parc Monceau"
+                            />
+                        </div>
+                        <div className="flex flex-col gap-2" style={{ width: '120px' }}>
+                            <label className="text-sm font-bold flex items-center gap-1">
+                                <Users size={14} />
+                                Max
+                            </label>
+                            <input
+                                type="number"
+                                min="1"
+                                max="1000"
+                                className="card p-3"
+                                value={formData.maxAttendees}
+                                onChange={e => setFormData({ ...formData, maxAttendees: e.target.value })}
+                                placeholder="50"
+                            />
+                        </div>
                     </div>
 
                     <div className="flex flex-col gap-2">
