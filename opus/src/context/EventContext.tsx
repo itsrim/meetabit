@@ -1,9 +1,10 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, ReactNode } from 'react';
+import { Event, NewEvent, EventContextType } from '../types';
 
-const EventContext = createContext();
+const EventContext = createContext<EventContextType | undefined>(undefined);
 
 // Générateur de données massives pour tester la scalabilité
-const EVENT_TITLES = [
+const EVENT_TITLES: string[] = [
     "Soirée Jeux de Société", "Randonnée Urbaine", "Atelier Cuisine Italienne", "Yoga au Parc",
     "Conférence Tech", "Afterwork Salsa", "Cours de Peinture", "Dégustation de Vins",
     "Session Photo", "Tournoi d'Échecs", "Karaoké Night", "Brunch Networking",
@@ -13,23 +14,23 @@ const EVENT_TITLES = [
     "Visite Musée", "Cours de Boxe", "Soirée Poker", "Atelier Cocktails"
 ];
 
-const LOCATIONS = [
+const LOCATIONS: string[] = [
     "Le Bar à Jeux, Paris", "Parc des Buttes Chaumont", "Station F", "La Pachanga",
     "Café de Flore", "Le Marais", "Montmartre", "Bastille", "République",
     "Belleville", "Oberkampf", "Nation", "Châtelet", "Saint-Germain"
 ];
 
-const TIMES = ["08:00", "09:30", "10:00", "11:00", "12:30", "14:00", "15:30", "17:00", "18:30", "19:00", "20:00", "21:00"];
+const TIMES: string[] = ["08:00", "09:30", "10:00", "11:00", "12:30", "14:00", "15:30", "17:00", "18:30", "19:00", "20:00", "21:00"];
 
-const ORGANIZER_NAMES = [
+const ORGANIZER_NAMES: string[] = [
     "Sophie M.", "Lucas D.", "Emma W.", "Thomas R.", "Léa P.", "Hugo B.", 
     "Camille V.", "Nathan L.", "Chloé G.", "Maxime F.", "Julie K.", "Antoine S.",
     "Marie C.", "Alexandre T.", "Sarah J.", "Pierre N.", "Clara H.", "Julien M."
 ];
 
 // Génère ~30 événements par jour pour tout janvier 2026 (31 jours * ~30 = ~930 événements)
-const generateMassiveEvents = () => {
-    const events = [];
+const generateMassiveEvents = (): Event[] => {
+    const events: Event[] = [];
     let id = 1;
     
     for (let day = 1; day <= 31; day++) {
@@ -64,38 +65,47 @@ const generateMassiveEvents = () => {
 
 const INITIAL_EVENTS = generateMassiveEvents();
 
-export const EventProvider = ({ children }) => {
-    const [events, setEvents] = useState(INITIAL_EVENTS);
-    const [selectedDate, setSelectedDate] = useState(new Date(2026, 0, 6));
+interface EventProviderProps {
+    children: ReactNode;
+}
 
-    const addEvent = (newEvent) => {
-        // New events created by me are Organizer=true
+export const EventProvider: React.FC<EventProviderProps> = ({ children }) => {
+    const [events, setEvents] = useState<Event[]>(INITIAL_EVENTS);
+    const [selectedDate, setSelectedDate] = useState<Date>(new Date(2026, 0, 6));
+
+    const addEvent = (newEvent: NewEvent): void => {
         setEvents([...events, { 
             ...newEvent, 
             id: Date.now(), 
             registered: true, 
             isOrganizer: true,
+            organizer: 'Moi',
+            attendees: 1,
+            maxAttendees: newEvent.maxAttendees || 20,
+            price: 0,
+            favorite: false,
+            image: "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=800&q=80",
             hideAddressUntilRegistered: newEvent.hideAddressUntilRegistered || false
         }]);
     };
 
-    const toggleRegistration = (eventId) => {
+    const toggleRegistration = (eventId: number): void => {
         setEvents(events.map(e =>
             e.id === eventId ? { ...e, registered: !e.registered } : e
         ));
     };
 
-    const toggleFavorite = (eventId) => {
+    const toggleFavorite = (eventId: number): void => {
         setEvents(events.map(e =>
             e.id === eventId ? { ...e, favorite: !e.favorite } : e
         ));
     };
 
-    const getFavoriteEvents = () => {
-        return events.filter(e => e.favorite).sort((a, b) => a.date - b.date);
+    const getFavoriteEvents = (): Event[] => {
+        return events.filter(e => e.favorite).sort((a, b) => a.date.getTime() - b.date.getTime());
     };
 
-    const getEventsForDate = (date) => {
+    const getEventsForDate = (date: Date): Event[] => {
         return events.filter(e =>
             e.date.getDate() === date.getDate() &&
             e.date.getMonth() === date.getMonth() &&
@@ -103,7 +113,7 @@ export const EventProvider = ({ children }) => {
         );
     };
 
-    const hasEventOnDate = (date) => {
+    const hasEventOnDate = (date: Date): boolean => {
         return events.some(e =>
             e.registered &&
             e.date.getDate() === date.getDate() &&
@@ -113,11 +123,8 @@ export const EventProvider = ({ children }) => {
     };
 
     // Calculate event counts per date for dot indicators
-    const eventCounts = events.reduce((acc, event) => {
+    const eventCounts = events.reduce<Record<string, number>>((acc, event) => {
         const dateStr = event.date.toDateString();
-        // Only count if registered? Or all? Let's count all available logic, 
-        // but ui uses hasEventOnDate for green dots (registered).
-        // Let's keep a map of valid events.
         acc[dateStr] = (acc[dateStr] || 0) + 1;
         return acc;
     }, {});
@@ -140,11 +147,17 @@ export const EventProvider = ({ children }) => {
     );
 };
 
-export const useEvents = () => useContext(EventContext);
+export const useEvents = (): EventContextType => {
+    const context = useContext(EventContext);
+    if (!context) {
+        throw new Error('useEvents must be used within an EventProvider');
+    }
+    return context;
+};
 
 // Utility function to get days for basic calendar logic
-export const getDays = (currentDate, isWeekly) => {
-    const days = [];
+export const getDays = (currentDate: Date, isWeekly: boolean): Date[] => {
+    const days: Date[] = [];
     if (isWeekly) {
         // Find Monday of the current week (or Sunday depending on locale, let's assume Mon start)
         const day = currentDate.getDay();
@@ -168,3 +181,4 @@ export const getDays = (currentDate, isWeekly) => {
     }
     return days;
 };
+

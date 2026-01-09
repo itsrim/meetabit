@@ -1,16 +1,37 @@
 import React, { useEffect, useState } from 'react';
 import CalendarStrip from './CalendarStrip';
-import { MapPin, Clock, Users, Send, CheckCircle, Plus, Scan, Heart } from 'lucide-react';
+import { MapPin, Clock, Users, CheckCircle, Plus, Heart } from 'lucide-react';
 import { useEvents } from '../context/EventContext';
 import { useFeatureFlags } from '../context/FeatureFlagContext';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import PageTransition from './PageTransition';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { Virtuoso } from 'react-virtuoso';
 import BlurImage from './BlurImage';
+import { Event } from '../types';
 
-const EventCard = ({ event, onToggle, onToggleFavorite, isLast, featureFlags, registrationCount, favoriteCount }) => {
+interface FeatureFlags {
+    favoriteButton: boolean;
+    showEventPrice: boolean;
+    showAttendeeCount: boolean;
+    blurEventAddress: boolean;
+    limitRegistrations: boolean;
+    maxRegistrations: number;
+    maxFavorites: number;
+}
+
+interface EventCardProps {
+    event: Event;
+    onToggle: (eventId: number) => void;
+    onToggleFavorite: (eventId: number) => void;
+    isLast: boolean;
+    featureFlags: FeatureFlags;
+    registrationCount: number;
+    favoriteCount: number;
+}
+
+const EventCard: React.FC<EventCardProps> = ({ event, onToggle, onToggleFavorite, isLast, featureFlags, registrationCount, favoriteCount }) => {
     const navigate = useNavigate();
     const isRegistered = event.registered;
     const isOrganizer = event.isOrganizer;
@@ -19,11 +40,11 @@ const EventCard = ({ event, onToggle, onToggleFavorite, isLast, featureFlags, re
     const canRegister = isRegistered || registrationCount < featureFlags.maxRegistrations;
     const canFavorite = isFavorite || favoriteCount < featureFlags.maxFavorites;
 
-    const handleCardClick = () => {
+    const handleCardClick = (): void => {
         navigate(`/event/${event.id}`);
     };
 
-    const handleActionClick = (e, action) => {
+    const handleActionClick = (e: React.MouseEvent, action: () => void): void => {
         e.stopPropagation();
         if (!isRegistered && !canRegister) {
             toast.error(`Limite de ${featureFlags.maxRegistrations} inscriptions atteinte ! 🔒`);
@@ -37,7 +58,7 @@ const EventCard = ({ event, onToggle, onToggleFavorite, isLast, featureFlags, re
         }
     };
 
-    const handleFavoriteClick = (e) => {
+    const handleFavoriteClick = (e: React.MouseEvent): void => {
         e.stopPropagation();
         if (!isFavorite && !canFavorite) {
             toast.error(`Limite de ${featureFlags.maxFavorites} favoris atteinte ! 🔒`);
@@ -205,12 +226,18 @@ const EventCard = ({ event, onToggle, onToggleFavorite, isLast, featureFlags, re
     );
 };
 
-const EventList = () => {
+interface EventItem {
+    event: Event;
+    date: Date;
+    id: string;
+}
+
+const EventList: React.FC = () => {
     const { events, selectedDate, setSelectedDate, toggleRegistration, toggleFavorite, getFavoriteEvents } = useEvents();
     const { isEnabled, isRestricted, getLimits } = useFeatureFlags();
-    const [allItems, setAllItems] = useState([]);
-    const [currentVisibleDate, setCurrentVisibleDate] = useState(selectedDate);
-    const [initialIndex, setInitialIndex] = useState(0);
+    const [allItems, setAllItems] = useState<EventItem[]>([]);
+    const [currentVisibleDate, setCurrentVisibleDate] = useState<Date>(selectedDate);
+    const [initialIndex, setInitialIndex] = useState<number>(0);
 
     const limits = getLimits();
     const today = new Date();
@@ -220,7 +247,7 @@ const EventList = () => {
     const favoriteCount = getFavoriteEvents().length;
     
     // Feature flags pour les cartes d'événements
-    const featureFlags = {
+    const featureFlags: FeatureFlags = {
         favoriteButton: isEnabled('favoriteButton'),
         showEventPrice: isEnabled('showEventPrice'),
         showAttendeeCount: isEnabled('showAttendeeCount'),
@@ -232,7 +259,7 @@ const EventList = () => {
 
     // Générer une liste d'événements pour tout le mois de janvier
     useEffect(() => {
-        const items = [];
+        const items: EventItem[] = [];
         
         // Charger tout le mois de janvier 2026
         const startDate = new Date(2026, 0, 1);
@@ -278,10 +305,10 @@ const EventList = () => {
             const initialItem = items[selectedDateIndex] || items[0];
             setCurrentVisibleDate(initialItem.date);
         }
-    }, [events]);
+    }, [events, selectedDate]);
 
     // Mettre à jour la date visible et le calendrier quand on scrolle
-    const handleVisibleItemsChanged = (range) => {
+    const handleVisibleItemsChanged = (range: { startIndex: number; endIndex: number }): void => {
         if (range.startIndex >= 0 && allItems.length > 0) {
             const firstVisibleItem = allItems[range.startIndex];
             if (firstVisibleItem && firstVisibleItem.date) {
@@ -362,3 +389,4 @@ const EventList = () => {
 };
 
 export default EventList;
+

@@ -1,12 +1,42 @@
-import React from 'react';
+import React, { useState, CSSProperties } from 'react';
 import { Virtuoso } from 'react-virtuoso';
-import { MessageCircle, Heart, Search, Users, Sparkles, Lock, Crown, Eye } from 'lucide-react';
+import { Heart, Search, Lock, Crown, Eye } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import PageTransition from './PageTransition';
 import BlurImage from './BlurImage';
-import { useNavigate } from 'react-router-dom';
 import { useFeatureFlags } from '../context/FeatureFlagContext';
+import { useVisits } from '../context/VisitContext';
 
-const FRIENDS = [
+interface Friend {
+    id: number;
+    name: string;
+    image: string;
+    msg: number;
+}
+
+interface Suggestion {
+    id: number;
+    name: string;
+    age: number;
+    image: string;
+    height: number;
+    rotation: number;
+    offset: number;
+}
+
+interface Message {
+    id: number;
+    name: string;
+    age: number;
+    message: string;
+    time: string;
+    unread: boolean;
+    image: string;
+}
+
+// Interface Visitor est maintenant dans VisitContext (VisitorInfo)
+
+const FRIENDS: Friend[] = [
     { id: 1, name: 'Hanna', image: 'https://i.pravatar.cc/150?img=1', msg: 2 },
     { id: 2, name: 'Sara', image: 'https://i.pravatar.cc/150?img=5', msg: 0 },
     { id: 3, name: 'Georgie', image: 'https://i.pravatar.cc/150?img=9', msg: 5 },
@@ -25,17 +55,17 @@ const FIRST_NAMES = [
     'Noah', 'Ethan', 'Paul', 'Tom', 'Mathis', 'Théo', 'Maxime', 'Alexandre', 'Antoine', 'Victor'
 ];
 
-const SUGGESTIONS = Array.from({ length: 1000 }, (_, i) => ({
+const SUGGESTIONS: Suggestion[] = Array.from({ length: 1000 }, (_, i) => ({
     id: i,
     name: FIRST_NAMES[i % FIRST_NAMES.length],
-    age: 18 + (i % 20), // Ages entre 18 et 37
-    image: `https://i.pravatar.cc/600?img=${(i % 70) + 1}`, // 70 images différentes en rotation
-    height: 200 + (i % 5) * 30, // Heights variées: 200, 230, 260, 290, 320
-    rotation: ((i * 7) % 13) - 6, // Rotation déterministe entre -6 et 6
-    offset: (i * 11) % 45 // Offset déterministe entre 0 et 44px
+    age: 18 + (i % 20),
+    image: `https://i.pravatar.cc/600?img=${(i % 70) + 1}`,
+    height: 200 + (i % 5) * 30,
+    rotation: ((i * 7) % 13) - 6,
+    offset: (i * 11) % 45
 }));
 
-const MESSAGES = [
+const MESSAGES: Message[] = [
     { id: 1, name: 'Peggie', age: 23, message: 'That sounds like a lot of fun! Would you like...', time: '5 mins', unread: true, image: 'https://i.pravatar.cc/150?img=30' },
     { id: 2, name: 'Eve', age: 22, message: "I'm good! Thanks", time: '38 mins', unread: false, image: 'https://i.pravatar.cc/150?img=31' },
     { id: 3, name: 'Sofi', age: 26, message: 'Yes, it works for me! See you!', time: '2 hrs', unread: true, image: 'https://i.pravatar.cc/150?img=32' },
@@ -44,39 +74,42 @@ const MESSAGES = [
     { id: 6, name: 'Rosella', age: 21, message: 'Maybe tomorrow?', time: 'Last week', unread: true, image: 'https://i.pravatar.cc/150?img=35' },
 ];
 
-// Visites du profil (Premium only)
-const VISITORS = [
-    { id: 1, name: 'Clara', age: 24, time: 'Il y a 2 min', image: 'https://i.pravatar.cc/150?img=41', visits: 3 },
-    { id: 2, name: 'Lucas', age: 27, time: 'Il y a 15 min', image: 'https://i.pravatar.cc/150?img=42', visits: 1 },
-    { id: 3, name: 'Manon', age: 22, time: 'Il y a 1h', image: 'https://i.pravatar.cc/150?img=43', visits: 5 },
-    { id: 4, name: 'Hugo', age: 25, time: 'Il y a 3h', image: 'https://i.pravatar.cc/150?img=44', visits: 2 },
-    { id: 5, name: 'Léa', age: 23, time: 'Hier', image: 'https://i.pravatar.cc/150?img=45', visits: 1 },
-    { id: 6, name: 'Nathan', age: 28, time: 'Hier', image: 'https://i.pravatar.cc/150?img=46', visits: 4 },
-    { id: 7, name: 'Camille', age: 21, time: 'Il y a 2 jours', image: 'https://i.pravatar.cc/150?img=47', visits: 1 },
-    { id: 8, name: 'Gabriel', age: 26, time: 'Il y a 3 jours', image: 'https://i.pravatar.cc/150?img=48', visits: 2 },
-];
+// Les visites sont maintenant gérées par VisitContext
 
-const SocialPage = () => {
-    const [activeTab, setActiveTab] = React.useState('suggestions');
+type TabType = 'suggestions' | 'messages' | 'visitors';
+
+const SocialPage: React.FC = () => {
+    const navigate = useNavigate();
+    const [activeTab, setActiveTab] = useState<TabType>('suggestions');
     const { isRestricted, isPremium } = useFeatureFlags();
+    const { getMyVisitors } = useVisits();
+    
+    // Récupérer les vrais visiteurs depuis le contexte
+    const visitors = getMyVisitors();
     
     const blurProfiles = isRestricted('blurProfiles');
     const disableMessages = isRestricted('disableMessages');
     const searchDisabled = isRestricted('disableSearch');
 
     // Render 2 items per row to simulate grid in Virtuoso
-    const rows = [];
+    const rows: Suggestion[][] = [];
     for (let i = 0; i < SUGGESTIONS.length; i += 2) {
         rows.push([SUGGESTIONS[i], SUGGESTIONS[i + 1]]);
     }
 
-    const Row = ({ index, style }) => {
+    interface RowProps {
+        index: number;
+        style: CSSProperties;
+    }
+
+    const Row: React.FC<RowProps> = ({ index, style }) => {
         const items = rows[index];
         return (
             <div style={{ ...style, display: 'flex', gap: '16px', padding: '0 16px 16px' }}>
                 {items.map((item, i) => item && (
                     <div
                         key={item.id}
+                        onClick={() => !blurProfiles && navigate(`/user/${item.id}`)}
                         style={{
                             flex: 1,
                             height: `${item.height}px`,
@@ -86,6 +119,7 @@ const SocialPage = () => {
                             boxShadow: '0 8px 20px rgba(0,0,0,0.15)',
                             transform: `rotate(${item.rotation}deg)`,
                             marginTop: `${item.offset}px`,
+                            cursor: blurProfiles ? 'not-allowed' : 'pointer'
                         }}
                     >
                         {/* Image avec blur conditionnel */}
@@ -93,7 +127,8 @@ const SocialPage = () => {
                             width: '100%', 
                             height: '100%',
                             filter: blurProfiles ? 'blur(15px)' : 'none',
-                            transform: blurProfiles ? 'scale(1.1)' : 'none'
+                            transform: blurProfiles ? 'scale(1.1)' : 'none',
+                            pointerEvents: 'none'
                         }}>
                             <BlurImage
                                 src={item.image}
@@ -115,7 +150,8 @@ const SocialPage = () => {
                                 display: 'flex',
                                 flexDirection: 'column',
                                 alignItems: 'center',
-                                gap: '8px'
+                                gap: '8px',
+                                pointerEvents: 'none'
                             }}>
                                 <Lock size={24} color="#fbbf24" />
                                 <span style={{ color: 'white', fontSize: '12px', fontWeight: '600' }}>Premium</span>
@@ -134,7 +170,8 @@ const SocialPage = () => {
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            border: '1px solid rgba(255,255,255,0.3)'
+                            border: '1px solid rgba(255,255,255,0.3)',
+                            pointerEvents: 'none'
                         }}>
                             <Heart size={16} color="white" />
                         </div>
@@ -144,7 +181,8 @@ const SocialPage = () => {
                             left: 0,
                             right: 0,
                             padding: '12px',
-                            background: 'linear-gradient(to top, rgba(0,0,0,0.6), transparent)'
+                            background: 'linear-gradient(to top, rgba(0,0,0,0.6), transparent)',
+                            pointerEvents: 'none'
                         }}>
                             <h3 style={{ 
                                 color: 'white', 
@@ -164,7 +202,7 @@ const SocialPage = () => {
 
     return (
         <PageTransition>
-            <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', background: 'white' }}>
+            <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--color-background)' }}>
 
                 {/* Header with Gradient - Compact */}
                 <div style={{
@@ -206,7 +244,7 @@ const SocialPage = () => {
                                     justifyContent: 'center',
                                     boxShadow: '0 2px 4px rgba(251, 191, 36, 0.4)'
                                 }}>
-                                    <Crown size={10} color="white" />
+                                    <Crown size={10} color="#111827" />
                                 </div>
                             )}
                         </button>
@@ -263,7 +301,7 @@ const SocialPage = () => {
                 </div>
 
                 {/* Main Content Area */}
-                <div style={{ flex: 1, background: '#f9fafb', borderTopLeftRadius: '24px', borderTopRightRadius: '24px', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+                <div style={{ flex: 1, background: 'var(--color-surface)', borderTopLeftRadius: '24px', borderTopRightRadius: '24px', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
 
                     {/* Data Tabs */}
                     <div style={{ padding: '14px 16px 10px', display: 'flex', gap: '20px' }}>
@@ -272,10 +310,11 @@ const SocialPage = () => {
                             style={{
                                 background: 'transparent', border: 'none', padding: 0,
                                 fontSize: '15px', fontWeight: activeTab === 'suggestions' ? '800' : '600',
-                                color: activeTab === 'suggestions' ? '#111827' : '#9ca3af',
+                                color: activeTab === 'suggestions' ? 'var(--color-text)' : 'var(--color-text-muted)',
                                 transition: 'color 0.2s',
                                 paddingBottom: '6px',
-                                borderBottom: activeTab === 'suggestions' ? '2px solid #111827' : '2px solid transparent'
+                                borderBottom: activeTab === 'suggestions' ? '2px solid var(--color-text)' : '2px solid transparent',
+                                cursor: 'pointer'
                             }}
                         >
                             Suggestions
@@ -285,11 +324,11 @@ const SocialPage = () => {
                             style={{
                                 background: 'transparent', border: 'none', padding: 0,
                                 fontSize: '15px', fontWeight: activeTab === 'messages' ? '800' : '600',
-                                color: disableMessages ? '#d1d5db' : (activeTab === 'messages' ? '#111827' : '#9ca3af'),
+                                color: disableMessages ? 'var(--color-text-muted)' : (activeTab === 'messages' ? 'var(--color-text)' : 'var(--color-text-muted)'),
                                 transition: 'color 0.2s',
                                 display: 'flex', alignItems: 'center', gap: '5px',
                                 paddingBottom: '6px',
-                                borderBottom: activeTab === 'messages' ? '2px solid #111827' : '2px solid transparent',
+                                borderBottom: activeTab === 'messages' ? '2px solid var(--color-text)' : '2px solid transparent',
                                 cursor: disableMessages ? 'not-allowed' : 'pointer',
                                 opacity: disableMessages ? 0.5 : 1
                             }}
@@ -313,7 +352,7 @@ const SocialPage = () => {
                                     justifyContent: 'center',
                                     boxShadow: '0 2px 4px rgba(251, 191, 36, 0.4)'
                                 }}>
-                                    <Crown size={10} color="white" />
+                                    <Crown size={10} color="#111827" />
                                 </div>
                             )}
                         </button>
@@ -322,7 +361,7 @@ const SocialPage = () => {
                             style={{
                                 background: 'transparent', border: 'none', padding: 0,
                                 fontSize: '15px', fontWeight: activeTab === 'visitors' ? '800' : '600',
-                                color: !isPremium ? '#d1d5db' : (activeTab === 'visitors' ? '#111827' : '#9ca3af'),
+                                color: !isPremium ? 'var(--color-text-muted)' : (activeTab === 'visitors' ? 'var(--color-text)' : 'var(--color-text-muted)'),
                                 transition: 'color 0.2s',
                                 display: 'flex', alignItems: 'center', gap: '5px',
                                 paddingBottom: '6px',
@@ -338,7 +377,7 @@ const SocialPage = () => {
                                     background: '#fbbf24', color: 'white',
                                     fontSize: '10px', fontWeight: 'bold',
                                     padding: '2px 6px', borderRadius: '10px',
-                                }}>{VISITORS.length}</span>
+                                }}>{visitors.length}</span>
                             )}
                             {!isPremium && (
                                 <div style={{
@@ -351,7 +390,7 @@ const SocialPage = () => {
                                     justifyContent: 'center',
                                     boxShadow: '0 2px 4px rgba(251, 191, 36, 0.4)'
                                 }}>
-                                    <Crown size={10} color="white" />
+                                    <Crown size={10} color="#111827" />
                                 </div>
                             )}
                         </button>
@@ -388,17 +427,17 @@ const SocialPage = () => {
                                                 }}></div>
                                             )}
                                         </div>
-                                        <div style={{ flex: 1, paddingBottom: '12px', borderBottom: '1px solid #f3f4f6' }}>
+                                        <div style={{ flex: 1, paddingBottom: '12px', borderBottom: '1px solid var(--color-border)' }}>
                                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
-                                                <h3 style={{ fontSize: '16px', fontWeight: '700', color: '#111827' }}>
+                                                <h3 style={{ fontSize: '16px', fontWeight: '700', color: 'var(--color-text)' }}>
                                                     {msg.name}, {msg.age}
                                                     {msg.unread && <span style={{ marginLeft: '6px', color: '#f97316', fontSize: '20px', lineHeight: 0 }}>•</span>}
                                                 </h3>
-                                                <span style={{ fontSize: '12px', color: '#9ca3af', fontWeight: '500' }}>{msg.time}</span>
+                                                <span style={{ fontSize: '12px', color: 'var(--color-text-muted)', fontWeight: '500' }}>{msg.time}</span>
                                             </div>
                                             <p style={{
                                                 fontSize: '14px',
-                                                color: msg.unread ? '#374151' : '#9ca3af',
+                                                color: msg.unread ? 'var(--color-text)' : 'var(--color-text-muted)',
                                                 fontWeight: msg.unread ? '600' : '400',
                                                 whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '240px'
                                             }}>
@@ -422,18 +461,18 @@ const SocialPage = () => {
                                     alignItems: 'center',
                                     gap: '12px'
                                 }}>
-                                    <Crown size={24} color="white" />
+                                    <Crown size={24} color="#111827" />
                                     <div>
                                         <div style={{ color: 'white', fontWeight: '700', fontSize: '14px' }}>
                                             Fonctionnalité Premium
                                         </div>
                                         <div style={{ color: 'rgba(255,255,255,0.8)', fontSize: '12px' }}>
-                                            {VISITORS.length} personnes ont visité votre profil
+                                            {visitors.length} personnes ont visité votre profil
                                         </div>
                                     </div>
                                 </div>
 
-                                {VISITORS.map(visitor => (
+                                {visitors.map(visitor => (
                                     <div key={visitor.id} style={{ 
                                         display: 'flex', 
                                         alignItems: 'center', 
@@ -441,9 +480,9 @@ const SocialPage = () => {
                                         marginBottom: '16px', 
                                         cursor: 'pointer',
                                         padding: '12px',
-                                        background: 'white',
+                                        background: 'var(--color-background)',
                                         borderRadius: '16px',
-                                        boxShadow: '0 2px 8px rgba(0,0,0,0.05)'
+                                        boxShadow: '0 2px 8px rgba(0,0,0,0.2)'
                                     }}>
                                         <div style={{ position: 'relative' }}>
                                             <div style={{ width: '56px', height: '56px', borderRadius: '50%', overflow: 'hidden' }}>
@@ -461,19 +500,19 @@ const SocialPage = () => {
                                                     fontWeight: 'bold',
                                                     padding: '2px 6px',
                                                     borderRadius: '10px',
-                                                    border: '2px solid white'
+                                                    border: '2px solid var(--color-surface)'
                                                 }}>
                                                     x{visitor.visits}
                                                 </div>
                                             )}
                                         </div>
                                         <div style={{ flex: 1 }}>
-                                            <h3 style={{ fontSize: '15px', fontWeight: '700', color: '#111827', marginBottom: '2px' }}>
+                                            <h3 style={{ fontSize: '15px', fontWeight: '700', color: 'var(--color-text)', marginBottom: '2px' }}>
                                                 {visitor.name}, {visitor.age}
                                             </h3>
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                                <Eye size={12} color="#9ca3af" />
-                                                <span style={{ fontSize: '12px', color: '#9ca3af' }}>{visitor.time}</span>
+                                                <Eye size={12} color="var(--color-text-muted)" />
+                                                <span style={{ fontSize: '12px', color: 'var(--color-text-muted)' }}>{visitor.time}</span>
                                             </div>
                                         </div>
                                         <button style={{
@@ -501,3 +540,4 @@ const SocialPage = () => {
 };
 
 export default SocialPage;
+

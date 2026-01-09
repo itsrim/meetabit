@@ -4,14 +4,14 @@ import { ChevronLeft, ChevronRight, ChevronDown, ChevronUp } from 'lucide-react'
 import useSwipe from '../hooks/useSwipe';
 import { motion, AnimatePresence } from 'framer-motion';
 
-const CalendarStrip = () => {
+const CalendarStrip: React.FC = () => {
     const { selectedDate, setSelectedDate, getEventsForDate } = useEvents();
     const { isWeekly, setWeekly, currentDate, next, prev, direction, handlers } = useSwipe(selectedDate);
 
     const days = getDays(currentDate, isWeekly);
 
     // Toggle view function
-    const toggleView = () => setWeekly(!isWeekly);
+    const toggleView = (): void => setWeekly(!isWeekly);
 
     return (
         <div
@@ -29,15 +29,15 @@ const CalendarStrip = () => {
             {/* Header Month/Year */}
             <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '12px 0 20px', position: 'relative' }}>
                 {/* Navigation Arrows Absolute to stay out of center Text */}
-                <button onClick={prev} style={{ position: 'absolute', left: '24px', padding: '8px', color: 'var(--color-text)', background: 'none', border: 'none', cursor: 'pointer' }}>
+                <button onClick={prev} style={{ position: 'absolute', left: '24px', padding: '8px', color: '#111827', background: 'none', border: 'none', cursor: 'pointer' }}>
                     <ChevronLeft size={20} />
                 </button>
 
-                <h2 style={{ fontSize: '1.25rem', fontWeight: 'bold', textTransform: 'capitalize', color: 'var(--color-text)' }}>
+                <h2 style={{ fontSize: '1.25rem', fontWeight: 'bold', textTransform: 'capitalize', color: '#111827' }}>
                     {currentDate.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })}
                 </h2>
 
-                <button onClick={next} style={{ position: 'absolute', right: '24px', padding: '8px', color: 'var(--color-text)', background: 'none', border: 'none', cursor: 'pointer' }}>
+                <button onClick={next} style={{ position: 'absolute', right: '24px', padding: '8px', color: '#111827', background: 'none', border: 'none', cursor: 'pointer' }}>
                     <ChevronRight size={20} />
                 </button>
             </div>
@@ -45,7 +45,7 @@ const CalendarStrip = () => {
             {/* Days Grid Wrapper with Framer Motion for smooth height resize */}
             <motion.div
                 initial={false}
-                animate={{ height: isWeekly ? 90 : 360 }} // Increased height slightly for bigger circles
+                animate={{ height: isWeekly ? 90 : 360 }}
                 transition={{ type: "spring", stiffness: 300, damping: 30 }}
                 style={{ overflow: 'hidden', position: 'relative', zIndex: 2 }}
             >
@@ -65,11 +65,8 @@ const CalendarStrip = () => {
                         }}
                     >
                         {/* Weekday Labels */}
-                        {['D', 'L', 'M', 'M', 'J', 'V', 'S'].map((d, i) => ( // US Format in screenshot? No, let's keep user locale order. Assuming standard Mon-Sun or Sun-Sat based on getDays.
-                            // Actually getDays logic I wrote previously was adapting.
-                            // Let's stick to Fr: L M M J V S D if that's what we did.
-                            // Wait, previous file had L M M J... let's stick to that.
-                            <div key={i} style={{ textAlign: 'center', fontSize: '13px', color: 'var(--color-text-muted)', marginBottom: '8px' }}>
+                        {['D', 'L', 'M', 'M', 'J', 'V', 'S'].map((d, i) => (
+                            <div key={i} style={{ textAlign: 'center', fontSize: '13px', color: 'rgba(0,0,0,0.6)', marginBottom: '8px' }}>
                                 {['L', 'M', 'M', 'J', 'V', 'S', 'D'][i]}
                             </div>
                         ))}
@@ -85,9 +82,7 @@ const CalendarStrip = () => {
                             return (
                                 <div
                                     key={index}
-                                    onClick={async () => {
-                                        await setSelectedDate(date);
-                                    }}
+                                    onClick={() => setSelectedDate(date)}
                                     style={{
                                         display: 'flex',
                                         flexDirection: 'column',
@@ -110,22 +105,16 @@ const CalendarStrip = () => {
                                             fontWeight: '600',
                                             position: 'relative',
                                             overflow: 'hidden',
-                                            // Logic for Circle Style
                                             background: hasEvent ? `url(${eventImage}) center/cover` : 'transparent',
-                                            color: hasEvent ? 'white' : (isSelected ? 'var(--color-primary)' : 'rgba(255,255,255,0.9)'),
-
-                                            // Selection Ring
+                                            color: hasEvent ? 'white' : (isSelected ? 'var(--color-primary)' : 'rgba(0,0,0,0.7)'),
                                             boxShadow: isSelected
                                                 ? (hasEvent ? '0 0 0 3px var(--color-primary), 0 0 15px var(--color-primary)' : '0 0 15px var(--color-primary-dark)')
                                                 : 'none',
                                             textShadow: hasEvent ? '0 1px 3px rgba(0,0,0,0.8)' : 'none',
-
                                             opacity: (!hasEvent && !isSelected) ? 0.7 : 1
                                         }}
                                     >
-                                        { /* Overlay for readability if image */}
                                         {hasEvent && <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.25)', borderRadius: '50%' }}></div>}
-
                                         <span style={{ position: 'relative', zIndex: 1 }}>{date.getDate()}</span>
                                     </div>
                                 </div>
@@ -146,9 +135,9 @@ const CalendarStrip = () => {
                 }}
             >
                 {isWeekly ? (
-                    <ChevronDown size={16} color="rgba(255,255,255,0.5)" />
+                    <ChevronDown size={16} color="rgba(0,0,0,0.5)" />
                 ) : (
-                    <ChevronUp size={16} color="rgba(255,255,255,0.5)" />
+                    <ChevronUp size={16} color="rgba(0,0,0,0.5)" />
                 )}
             </div>
         </div>
@@ -156,3 +145,4 @@ const CalendarStrip = () => {
 };
 
 export default CalendarStrip;
+

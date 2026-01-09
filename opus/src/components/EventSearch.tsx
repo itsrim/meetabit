@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, Bell, SlidersHorizontal, MapPin, Lock, Crown } from 'lucide-react';
+import { Search, Bell, SlidersHorizontal, MapPin, Crown } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useEvents } from '../context/EventContext';
 import { useFeatureFlags } from '../context/FeatureFlagContext';
@@ -9,18 +9,18 @@ import './SearchInput.css';
 
 const CATEGORIES = ["Tout", "Sorties", "Musée", "Sport", "Rando", "Danse", "Verre"];
 
-const EventSearch = () => {
+const EventSearch: React.FC = () => {
     const navigate = useNavigate();
     const { events } = useEvents();
-    const { isRestricted, isPremium } = useFeatureFlags();
-    const [selectedCategory, setSelectedCategory] = useState("Tout");
+    const { isRestricted } = useFeatureFlags();
+    const [selectedCategory, setSelectedCategory] = useState<string>("Tout");
     
     const searchDisabled = isRestricted('disableSearch');
 
     // Trier les événements par date et horaire
     const sortedEvents = [...events].sort((a, b) => {
         // D'abord par date
-        const dateCompare = a.date - b.date;
+        const dateCompare = a.date.getTime() - b.date.getTime();
         if (dateCompare !== 0) return dateCompare;
         // Ensuite par horaire
         const timeA = a.time.split(':').map(Number);
@@ -33,7 +33,7 @@ const EventSearch = () => {
 
     return (
         <PageTransition>
-            <div style={{ minHeight: '100vh', background: '#f9f9f9', paddingBottom: '100px' }}>
+            <div style={{ minHeight: '100vh', background: 'var(--color-background)', paddingBottom: '100px' }}>
 
                 {/* NEW HEADER - Compact */}
                 <div style={{
@@ -77,7 +77,7 @@ const EventSearch = () => {
                                         justifyContent: 'center',
                                         boxShadow: '0 2px 4px rgba(251, 191, 36, 0.4)'
                                     }}>
-                                        <Crown size={9} color="white" />
+                                        <Crown size={9} color="#111827" />
                                     </div>
                                 )}
                             </div>
@@ -136,7 +136,7 @@ const EventSearch = () => {
                 {/* 2. Trending Carousel */}
                 <div style={{ padding: '0 0 24px 24px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', paddingRight: '24px', marginBottom: '16px' }}>
-                        <h2 style={{ fontSize: '18px', fontWeight: '800', color: '#18181b' }}>Tendance cette semaine 🔥</h2>
+                        <h2 style={{ fontSize: '18px', fontWeight: '800', color: 'var(--color-text)' }}>Tendance cette semaine 🔥</h2>
                     </div>
 
                     <div style={{
@@ -160,7 +160,8 @@ const EventSearch = () => {
                                     position: 'relative',
                                     overflow: 'hidden',
                                     boxShadow: '0 8px 20px rgba(0,0,0,0.1)',
-                                    scrollSnapAlign: 'start'
+                                    scrollSnapAlign: 'start',
+                                    cursor: 'pointer'
                                 }}
                             >
                                 <BlurImage
@@ -214,14 +215,15 @@ const EventSearch = () => {
                                 style={{
                                     padding: '10px 24px',
                                     borderRadius: '30px',
-                                    background: isSelected ? '#f97316' : 'white', // Orange selected, white unselected
-                                    color: isSelected ? 'white' : '#71717a',
-                                    border: isSelected ? 'none' : '1px solid #e4e4e7',
+                                    background: isSelected ? '#f97316' : 'var(--color-surface)',
+                                    color: isSelected ? 'white' : 'var(--color-text-muted)',
+                                    border: isSelected ? 'none' : '1px solid var(--color-border)',
                                     fontWeight: '600',
                                     fontSize: '14px',
                                     whiteSpace: 'nowrap',
                                     boxShadow: isSelected ? '0 4px 12px rgba(249, 115, 22, 0.3)' : 'none',
-                                    transition: 'all 0.2s ease'
+                                    transition: 'all 0.2s ease',
+                                    cursor: 'pointer'
                                 }}
                             >
                                 {cat}
@@ -248,7 +250,8 @@ const EventSearch = () => {
                                     borderRadius: '20px',
                                     overflow: 'hidden',
                                     height: `${height}px`,
-                                    boxShadow: '0 4px 15px rgba(0,0,0,0.1)'
+                                    boxShadow: '0 4px 15px rgba(0,0,0,0.1)',
+                                    cursor: 'pointer'
                                 }}
                             >
                                 <BlurImage
@@ -266,7 +269,7 @@ const EventSearch = () => {
                                     background: 'linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0) 100%)'
                                 }}>
                                     <div style={{
-                                        background: 'rgba(255,255,255,0.9)',
+                                        background: 'var(--color-surface)',
                                         backdropFilter: 'blur(4px)',
                                         borderRadius: '16px',
                                         padding: '10px 12px',
@@ -275,7 +278,7 @@ const EventSearch = () => {
                                         alignItems: 'center'
                                     }}>
                                         <div style={{ overflow: 'hidden' }}>
-                                            <h4 style={{ fontSize: '12px', fontWeight: '700', color: '#18181b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                            <h4 style={{ fontSize: '12px', fontWeight: '700', color: 'var(--color-text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                                                 {event.title}
                                             </h4>
                                             {(() => {
@@ -283,7 +286,7 @@ const EventSearch = () => {
                                                 return (
                                                     <span style={{ 
                                                         fontSize: '10px', 
-                                                        color: '#71717a',
+                                                        color: 'var(--color-text-muted)',
                                                         filter: shouldHide ? 'blur(4px)' : 'none'
                                                     }}>
                                                         {shouldHide ? 'Inscrivez-vous' : event.location.split(',')[0]}
@@ -307,3 +310,4 @@ const EventSearch = () => {
 };
 
 export default EventSearch;
+

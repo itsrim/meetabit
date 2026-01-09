@@ -1,12 +1,22 @@
-import React, { useState } from 'react';
+import React, { useState, FormEvent, ChangeEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useEvents } from '../context/EventContext';
 import { useFeatureFlags } from '../context/FeatureFlagContext';
-import { ArrowLeft, Image as ImageIcon, Users, Lock, Crown, MapPin, Eye, EyeOff } from 'lucide-react';
+import { ArrowLeft, Image as ImageIcon, Users, Lock, MapPin, EyeOff } from 'lucide-react';
 import PageTransition from './PageTransition';
 import { toast } from 'sonner';
 
-const CreateEvent = () => {
+interface FormData {
+    title: string;
+    date: string;
+    time: string;
+    location: string;
+    description: string;
+    maxAttendees: number;
+    hideAddressUntilRegistered: boolean;
+}
+
+const CreateEvent: React.FC = () => {
     const navigate = useNavigate();
     const { addEvent, events } = useEvents();
     const { isRestricted, getLimits, isPremium } = useFeatureFlags();
@@ -21,7 +31,7 @@ const CreateEvent = () => {
     const canCreateEvent = !limitEventCreation || myActiveEvents.length < limits.maxActiveEvents;
     const maxParticipantsAllowed = limits.maxParticipants;
 
-    const [formData, setFormData] = useState({
+    const [formData, setFormData] = useState<FormData>({
         title: '',
         date: new Date().toISOString().split('T')[0],
         time: '19:00',
@@ -31,7 +41,7 @@ const CreateEvent = () => {
         hideAddressUntilRegistered: false
     });
 
-    const handleSubmit = (e) => {
+    const handleSubmit = (e: FormEvent<HTMLFormElement>): void => {
         e.preventDefault();
         
         if (!canCreateEvent) {
@@ -46,9 +56,7 @@ const CreateEvent = () => {
             time: formData.time,
             location: formData.location || 'Lieu secret',
             description: formData.description,
-            attendees: 1, // Me
-            maxAttendees: Math.min(parseInt(formData.maxAttendees) || 20, maxParticipantsAllowed),
-            image: "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=800&q=80", // Default party image
+            maxAttendees: Math.min(formData.maxAttendees || 20, maxParticipantsAllowed),
             hideAddressUntilRegistered: formData.hideAddressUntilRegistered
         };
 
@@ -125,7 +133,7 @@ const CreateEvent = () => {
                             required
                             className="card p-3"
                             value={formData.title}
-                            onChange={e => setFormData({ ...formData, title: e.target.value })}
+                            onChange={(e: ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, title: e.target.value })}
                             placeholder="Ex: Soirée Pizza"
                             style={{ border: 'none', background: 'var(--color-surface)' }}
                         />
@@ -139,7 +147,7 @@ const CreateEvent = () => {
                                 required
                                 className="card p-3 w-full"
                                 value={formData.date}
-                                onChange={e => setFormData({ ...formData, date: e.target.value })}
+                                onChange={(e: ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, date: e.target.value })}
                             />
                         </div>
                         <div className="flex-1 flex flex-col gap-2">
@@ -149,7 +157,7 @@ const CreateEvent = () => {
                                 required
                                 className="card p-3 w-full"
                                 value={formData.time}
-                                onChange={e => setFormData({ ...formData, time: e.target.value })}
+                                onChange={(e: ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, time: e.target.value })}
                             />
                         </div>
                     </div>
@@ -160,7 +168,7 @@ const CreateEvent = () => {
                             <input
                                 className="card p-3"
                                 value={formData.location}
-                                onChange={e => setFormData({ ...formData, location: e.target.value })}
+                                onChange={(e: ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, location: e.target.value })}
                                 placeholder="Ex: Parc Monceau"
                             />
                         </div>
@@ -175,7 +183,7 @@ const CreateEvent = () => {
                                 max={maxParticipantsAllowed}
                                 className="card p-3"
                                 value={formData.maxAttendees}
-                                onChange={e => setFormData({ ...formData, maxAttendees: Math.min(parseInt(e.target.value) || 1, maxParticipantsAllowed) })}
+                                onChange={(e: ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, maxAttendees: Math.min(parseInt(e.target.value) || 1, maxParticipantsAllowed) })}
                                 placeholder={String(maxParticipantsAllowed)}
                             />
                         </div>
@@ -187,7 +195,7 @@ const CreateEvent = () => {
                             className="card p-3"
                             rows={4}
                             value={formData.description}
-                            onChange={e => setFormData({ ...formData, description: e.target.value })}
+                            onChange={(e: ChangeEvent<HTMLTextAreaElement>) => setFormData({ ...formData, description: e.target.value })}
                             placeholder="Dites-nous en plus..."
                             style={{ resize: 'none' }}
                         />
@@ -264,3 +272,4 @@ const CreateEvent = () => {
 };
 
 export default CreateEvent;
+

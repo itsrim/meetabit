@@ -1,10 +1,17 @@
-import React, { useState } from 'react';
+import React, { useState, CSSProperties, ImgHTMLAttributes } from 'react';
+
+interface BlurImageProps extends Omit<ImgHTMLAttributes<HTMLImageElement>, 'style'> {
+    src: string;
+    alt: string;
+    style?: CSSProperties;
+    className?: string;
+}
 
 /**
  * BlurImage - Affiche un placeholder flouté immédiatement,
  * puis révèle l'image une fois chargée avec une transition douce.
  */
-const BlurImage = ({ 
+const BlurImage: React.FC<BlurImageProps> = ({ 
     src, 
     alt, 
     style = {}, 
@@ -67,3 +74,4 @@ const BlurImage = ({
 };
 
 export default BlurImage;
+

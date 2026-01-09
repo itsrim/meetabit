@@ -1,17 +1,18 @@
-import { useState } from 'react';
+import { useState, TouchEvent } from 'react';
+import { UseSwipeReturn, SwipeHandlers } from '../types';
 
-const useSwipe = (initialDate) => {
-    const [currentDate, setCurrentDate] = useState(initialDate || new Date());
-    const [isWeekly, setWeekly] = useState(true);
-    const [direction, setDirection] = useState(0);
+const useSwipe = (initialDate?: Date): UseSwipeReturn => {
+    const [currentDate, setCurrentDate] = useState<Date>(initialDate || new Date());
+    const [isWeekly, setWeekly] = useState<boolean>(true);
+    const [direction, setDirection] = useState<number>(0);
 
     // Swipe State
-    const [touchStartX, setTouchStartX] = useState(null);
-    const [touchStartY, setTouchStartY] = useState(null);
-    const [touchEndX, setTouchEndX] = useState(null);
-    const [touchEndY, setTouchEndY] = useState(null);
+    const [touchStartX, setTouchStartX] = useState<number | null>(null);
+    const [touchStartY, setTouchStartY] = useState<number | null>(null);
+    const [touchEndX, setTouchEndX] = useState<number | null>(null);
+    const [touchEndY, setTouchEndY] = useState<number | null>(null);
 
-    const next = () => {
+    const next = (): void => {
         setDirection(1);
         const newDate = new Date(currentDate);
         if (isWeekly) {
@@ -22,7 +23,7 @@ const useSwipe = (initialDate) => {
         setCurrentDate(newDate);
     };
 
-    const prev = () => {
+    const prev = (): void => {
         setDirection(-1);
         const newDate = new Date(currentDate);
         if (isWeekly) {
@@ -36,19 +37,19 @@ const useSwipe = (initialDate) => {
     // Swipe Handlers
     const minSwipeDistance = 50;
 
-    const onTouchStart = (e) => {
+    const onTouchStart = (e: TouchEvent): void => {
         setTouchEndX(null);
         setTouchEndY(null);
         setTouchStartX(e.targetTouches[0].clientX);
         setTouchStartY(e.targetTouches[0].clientY);
     };
 
-    const onTouchMove = (e) => {
+    const onTouchMove = (e: TouchEvent): void => {
         setTouchEndX(e.targetTouches[0].clientX);
         setTouchEndY(e.targetTouches[0].clientY);
     };
 
-    const onTouchEnd = () => {
+    const onTouchEnd = (): void => {
         if (!touchStartX || !touchStartY) return;
 
         const distanceX = touchStartX - (touchEndX || touchStartX);
@@ -74,7 +75,7 @@ const useSwipe = (initialDate) => {
         }
     };
 
-    const handlers = {
+    const handlers: SwipeHandlers = {
         onTouchStart,
         onTouchMove,
         onTouchEnd
@@ -92,3 +93,4 @@ const useSwipe = (initialDate) => {
 };
 
 export default useSwipe;
+

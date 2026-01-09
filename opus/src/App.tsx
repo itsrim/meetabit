@@ -1,12 +1,13 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
-import { Calendar, User, QrCode, Home, PlusCircle, Search, MessageCircle, Plus, Lock, Crown } from 'lucide-react';
+import { Calendar, User, Search, MessageCircle, Plus, Crown } from 'lucide-react';
 import { AnimatePresence } from 'framer-motion';
 import { Toaster } from 'sonner';
 import './index.css';
 
 import { EventProvider } from './context/EventContext';
 import { FeatureFlagProvider, useFeatureFlags } from './context/FeatureFlagContext';
+import { VisitProvider } from './context/VisitContext';
 
 // Components
 import EventList from './components/EventList';
@@ -15,18 +16,26 @@ import CreateEvent from './components/CreateEvent';
 import EventDetail from './components/EventDetail';
 import EventSearch from './components/EventSearch';
 import SocialPage from './components/SocialPage';
+import UserProfile from './components/UserProfile';
+import { ThemeProvider } from './context/ThemeContext';
+import { LucideIcon } from 'lucide-react';
 
+interface NavItemProps {
+  to: string;
+  icon: LucideIcon;
+  label: string;
+  isPremiumLocked?: boolean;
+}
 
 function Navigation() {
   const location = useLocation();
   const { isRestricted } = useFeatureFlags();
-  const isActive = (path) => location.pathname === path;
-  const searchDisabled = isRestricted('disableSearch');
+  const isActive = (path: string): boolean => location.pathname === path;
 
-  // Hide nav on Detail pages
-  if (location.pathname.startsWith('/event/')) return null;
+  // Hide nav on Detail pages and User profiles
+  if (location.pathname.startsWith('/event/') || location.pathname.startsWith('/user/')) return null;
 
-  const NavItem = ({ to, icon: Icon, label, isPremiumLocked }) => {
+  const NavItem: React.FC<NavItemProps> = ({ to, icon: Icon, label, isPremiumLocked }) => {
     const active = isActive(to);
     return (
       <Link to={to} style={{
@@ -148,12 +157,17 @@ function AnimatedRoutes() {
         <Route path="/create" element={<CreateEvent />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/event/:id" element={<EventDetail />} />
+        <Route path="/user/:id" element={<UserProfile />} />
       </Routes>
     </AnimatePresence>
   );
 }
 
-function Layout({ children }) {
+interface LayoutProps {
+  children: React.ReactNode;
+}
+
+function Layout({ children }: LayoutProps) {
   const location = useLocation();
   const isDetails = location.pathname.startsWith('/event/');
 
@@ -165,19 +179,19 @@ function Layout({ children }) {
   );
 }
 
-import { ThemeProvider } from './context/ThemeContext';
-
 function App() {
   return (
     <ThemeProvider>
       <FeatureFlagProvider>
         <EventProvider>
-          <Toaster position="top-center" richColors theme="system" />
-          <Router>
-            <Layout>
-              <AnimatedRoutes />
-            </Layout>
-          </Router>
+          <VisitProvider>
+            <Toaster position="top-center" richColors theme="system" />
+            <Router>
+              <Layout>
+                <AnimatedRoutes />
+              </Layout>
+            </Router>
+          </VisitProvider>
         </EventProvider>
       </FeatureFlagProvider>
     </ThemeProvider>
@@ -185,3 +199,4 @@ function App() {
 }
 
 export default App;
+

@@ -1,9 +1,10 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { Config, ConfigKey, ConfigItemWithKey, Limits, FeatureFlagContextType } from '../types';
 
-const FeatureFlagContext = createContext();
+const FeatureFlagContext = createContext<FeatureFlagContextType | undefined>(undefined);
 
 // Configuration Premium vs Free
-const DEFAULT_CONFIG = {
+const DEFAULT_CONFIG: Config = {
     isPremium: {
         value: false,
         label: '✨ Mode Premium',
@@ -64,7 +65,7 @@ const DEFAULT_CONFIG = {
 };
 
 // Limites selon le statut
-const LIMITS = {
+const LIMITS: { free: Limits; premium: Limits } = {
     free: {
         maxParticipants: 8,
         maxRegistrations: 3,
@@ -79,17 +80,21 @@ const LIMITS = {
     }
 };
 
-export const FeatureFlagProvider = ({ children }) => {
+interface FeatureFlagProviderProps {
+    children: ReactNode;
+}
+
+export const FeatureFlagProvider: React.FC<FeatureFlagProviderProps> = ({ children }) => {
     // Charger la config depuis localStorage ou utiliser les valeurs par défaut
-    const [config, setConfig] = useState(() => {
+    const [config, setConfig] = useState<Config>(() => {
         const saved = localStorage.getItem('appConfig');
         if (saved) {
             try {
-                const parsed = JSON.parse(saved);
+                const parsed = JSON.parse(saved) as Partial<Config>;
                 const merged = { ...DEFAULT_CONFIG };
-                Object.keys(parsed).forEach(key => {
-                    if (merged[key]) {
-                        merged[key] = { ...merged[key], value: parsed[key].value };
+                (Object.keys(parsed) as ConfigKey[]).forEach(key => {
+                    if (merged[key] && parsed[key]) {
+                        merged[key] = { ...merged[key], value: parsed[key]!.value };
                     }
                 });
                 return merged;
@@ -108,7 +113,7 @@ export const FeatureFlagProvider = ({ children }) => {
     const isPremium = config.isPremium.value;
 
     // Toggle une config
-    const toggleConfig = (configKey) => {
+    const toggleConfig = (configKey: ConfigKey): void => {
         setConfig(prev => ({
             ...prev,
             [configKey]: {
@@ -119,20 +124,20 @@ export const FeatureFlagProvider = ({ children }) => {
     };
 
     // Vérifier si une restriction est active (prend en compte le premium)
-    const isRestricted = (configKey) => {
+    const isRestricted = (configKey: ConfigKey): boolean => {
         if (isPremium) return false; // Premium = pas de restriction
         return config[configKey]?.value ?? false;
     };
 
     // Obtenir les limites actuelles selon le statut premium
-    const getLimits = () => {
+    const getLimits = (): Limits => {
         return isPremium ? LIMITS.premium : LIMITS.free;
     };
 
     // Obtenir la config groupée par catégorie
-    const getConfigByCategory = () => {
-        const categories = {};
-        Object.entries(config).forEach(([key, item]) => {
+    const getConfigByCategory = (): Record<string, ConfigItemWithKey[]> => {
+        const categories: Record<string, ConfigItemWithKey[]> = {};
+        (Object.entries(config) as [ConfigKey, typeof config[ConfigKey]][]).forEach(([key, item]) => {
             const category = item.category || 'Autres';
             if (!categories[category]) {
                 categories[category] = [];
@@ -143,17 +148,17 @@ export const FeatureFlagProvider = ({ children }) => {
     };
 
     // Reset toute la config aux valeurs par défaut
-    const resetConfig = () => {
+    const resetConfig = (): void => {
         setConfig(DEFAULT_CONFIG);
     };
 
     // Compatibilité avec l'ancien système
-    const isEnabled = (flagKey) => {
+    const isEnabled = (flagKey: string): boolean => {
         // Pour les anciens flags, retourner true par défaut
         if (flagKey === 'favoriteButton') return true;
         if (flagKey === 'showEventPrice') return true;
         if (flagKey === 'showAttendeeCount') return true;
-        return !isRestricted(flagKey);
+        return !isRestricted(flagKey as ConfigKey);
     };
 
     return (
@@ -177,7 +182,7 @@ export const FeatureFlagProvider = ({ children }) => {
     );
 };
 
-export const useFeatureFlags = () => {
+export const useFeatureFlags = (): FeatureFlagContextType => {
     const context = useContext(FeatureFlagContext);
     if (!context) {
         throw new Error('useFeatureFlags must be used within a FeatureFlagProvider');

@@ -1,12 +1,20 @@
 import React, { useState } from 'react';
-import { Award, ShieldCheck, MapPin, Clock, Calendar, Heart, CalendarDays, History, Users, Settings, RotateCcw, Crown, Lock } from 'lucide-react';
+import { Award, ShieldCheck, Heart, CalendarDays, History, Users, Settings, RotateCcw, Crown, Lock } from 'lucide-react';
 import PageTransition from './PageTransition';
 import BlurImage from './BlurImage';
 import { useEvents } from '../context/EventContext';
 import { useFeatureFlags } from '../context/FeatureFlagContext';
+import { ConfigKey, ConfigItemWithKey } from '../types';
+
+interface Friend {
+    id: number;
+    name: string;
+    image: string;
+    events: number;
+}
 
 // Fake friends data
-const FRIENDS = [
+const FRIENDS: Friend[] = [
     { id: 1, name: 'Marie L.', image: 'https://i.pravatar.cc/150?img=1', events: 12 },
     { id: 2, name: 'Lucas M.', image: 'https://i.pravatar.cc/150?img=8', events: 8 },
     { id: 3, name: 'Emma R.', image: 'https://i.pravatar.cc/150?img=5', events: 15 },
@@ -15,16 +23,18 @@ const FRIENDS = [
     { id: 6, name: 'Nathan B.', image: 'https://i.pravatar.cc/150?img=12', events: 4 },
 ];
 
-const Profile = () => {
+type TabType = 'upcoming' | 'favorites' | 'friends' | 'past' | 'settings';
+
+const Profile: React.FC = () => {
     const { events, getFavoriteEvents } = useEvents();
     const { getConfigByCategory, toggleConfig, resetConfig, isPremium, getLimits } = useFeatureFlags();
-    const [activeTab, setActiveTab] = useState('upcoming');
+    const [activeTab, setActiveTab] = useState<TabType>('upcoming');
     
     const today = new Date();
     const limits = getLimits();
     // Filter events where user is registered or is organizer
-    const myEvents = events.filter(e => (e.registered || e.isOrganizer) && e.date >= today).sort((a, b) => a.date - b.date);
-    const pastEvents = events.filter(e => (e.registered || e.isOrganizer) && e.date < today).sort((a, b) => b.date - a.date);
+    const myEvents = events.filter(e => (e.registered || e.isOrganizer) && e.date >= today).sort((a, b) => a.date.getTime() - b.date.getTime());
+    const pastEvents = events.filter(e => (e.registered || e.isOrganizer) && e.date < today).sort((a, b) => b.date.getTime() - a.date.getTime());
     const favoriteEvents = getFavoriteEvents();
     const configByCategory = getConfigByCategory();
 
@@ -518,10 +528,10 @@ const Profile = () => {
                                     {!isPremium && <Lock size={12} />}
                                     {isPremium ? 'Contrôle des restrictions' : 'Restrictions Mode Gratuit'}
                                 </div>
-                                {(configByCategory['Restrictions Free'] || []).map((item, index, arr) => (
+                                {(configByCategory['Restrictions Free'] || []).map((item: ConfigItemWithKey, index: number, arr: ConfigItemWithKey[]) => (
                                     <div
                                         key={item.key}
-                                        onClick={() => isPremium && toggleConfig(item.key)}
+                                        onClick={() => isPremium && toggleConfig(item.key as ConfigKey)}
                                         style={{
                                             display: 'flex',
                                             justifyContent: 'space-between',
@@ -609,3 +619,4 @@ const Profile = () => {
 };
 
 export default Profile;
+

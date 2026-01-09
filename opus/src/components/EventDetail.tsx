@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useEvents } from '../context/EventContext';
 import { ArrowLeft, MapPin, Clock, Share2, Heart, MessageCircle, Lock } from 'lucide-react';
@@ -6,16 +6,23 @@ import PageTransition from './PageTransition';
 import BlurImage from './BlurImage';
 import { toast } from 'sonner';
 
+interface Participant {
+    id: number;
+    name: string;
+    score: number;
+    avatar: string;
+}
+
 // Mock Participants Data
-const MOCK_PARTICIPANTS = [
+const MOCK_PARTICIPANTS: Participant[] = [
     { id: 1, name: "Sophie M.", score: 4.9, avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop" },
     { id: 2, name: "Lucas D.", score: 4.2, avatar: "https://images.unsplash.com/photo-1599566150163-29194dcaad36?w=150&h=150&fit=crop" },
     { id: 3, name: "Emma W.", score: 5.0, avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&h=150&fit=crop" },
     { id: 4, name: "Thomas R.", score: 4.8, avatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&h=150&fit=crop" }
 ];
 
-const EventDetail = () => {
-    const { id } = useParams();
+const EventDetail: React.FC = () => {
+    const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
     const { events, toggleRegistration } = useEvents();
     
@@ -23,11 +30,11 @@ const EventDetail = () => {
 
     if (!event) return <div className="p-4">Événement non trouvé</div>;
 
-    const handleShare = () => {
+    const handleShare = (): void => {
         toast.success("Lien partagé !");
     };
 
-    const handleRegistration = () => {
+    const handleRegistration = (): void => {
         toggleRegistration(event.id);
         if (!event.registered) {
             toast.success("Inscription confirmée !");
@@ -35,6 +42,8 @@ const EventDetail = () => {
             toast.info("Désinscription prise en compte");
         }
     };
+
+    const shouldHideAddress = event.hideAddressUntilRegistered && !event.registered && !event.isOrganizer;
 
     return (
         <PageTransition>
@@ -69,7 +78,9 @@ const EventDetail = () => {
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
-                                boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                                boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                                border: 'none',
+                                cursor: 'pointer'
                             }}
                         >
                             <ArrowLeft size={20} color="black" />
@@ -86,7 +97,9 @@ const EventDetail = () => {
                                     display: 'flex',
                                     alignItems: 'center',
                                     justifyContent: 'center',
-                                    boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                                    boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                                    border: 'none',
+                                    cursor: 'pointer'
                                 }}
                             >
                                 <Share2 size={18} color="black" />
@@ -100,7 +113,9 @@ const EventDetail = () => {
                                     display: 'flex',
                                     alignItems: 'center',
                                     justifyContent: 'center',
-                                    boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                                    boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                                    border: 'none',
+                                    cursor: 'pointer'
                                 }}
                             >
                                 <Heart size={20} color="black" />
@@ -151,26 +166,21 @@ const EventDetail = () => {
                                 <MapPin size={24} style={{ color: 'var(--color-text-muted)' }} />
                             </div>
                             <div>
-                                {(() => {
-                                    const shouldHideAddress = event.hideAddressUntilRegistered && !event.registered && !event.isOrganizer;
-                                    return (
-                                        <div style={{ 
-                                            fontWeight: '500', 
-                                            color: 'var(--color-text-muted)',
-                                            filter: shouldHideAddress ? 'blur(5px)' : 'none',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            gap: '6px'
-                                        }}>
-                                            {shouldHideAddress ? (
-                                                <>
-                                                    <span>Inscrivez-vous pour voir l'adresse</span>
-                                                    <Lock size={12} color="#f59e0b" />
-                                                </>
-                                            ) : event.location}
-                                        </div>
-                                    );
-                                })()}
+                                <div style={{ 
+                                    fontWeight: '500', 
+                                    color: 'var(--color-text-muted)',
+                                    filter: shouldHideAddress ? 'blur(5px)' : 'none',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '6px'
+                                }}>
+                                    {shouldHideAddress ? (
+                                        <>
+                                            <span>Inscrivez-vous pour voir l'adresse</span>
+                                            <Lock size={12} color="#f59e0b" />
+                                        </>
+                                    ) : event.location}
+                                </div>
                             </div>
                         </div>
                         <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
@@ -198,7 +208,7 @@ const EventDetail = () => {
                     <div style={{ marginBottom: '32px' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
                             <h3 style={{ fontWeight: '700', fontSize: '18px', color: 'var(--color-text)' }}>Participants</h3>
-                            <button style={{ color: 'var(--color-primary)', fontSize: '14px', fontWeight: '600' }}>Voir tout</button>
+                            <button style={{ color: 'var(--color-primary)', fontSize: '14px', fontWeight: '600', background: 'none', border: 'none', cursor: 'pointer' }}>Voir tout</button>
                         </div>
 
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -272,7 +282,8 @@ const EventDetail = () => {
                         alignItems: 'center',
                         justifyContent: 'center',
                         background: 'transparent',
-                        flexShrink: 0
+                        flexShrink: 0,
+                        cursor: 'pointer'
                     }}>
                         <MessageCircle size={24} color="var(--color-text)" />
                     </button>
@@ -288,7 +299,8 @@ const EventDetail = () => {
                             fontWeight: '600',
                             background: event.registered ? 'var(--color-surface-hover)' : '#be185d',
                             border: event.registered ? '1px solid var(--color-border)' : 'none',
-                            color: event.registered ? 'var(--color-text)' : 'white'
+                            color: event.registered ? 'var(--color-text)' : 'white',
+                            cursor: 'pointer'
                         }}
                     >
                         {event.registered ? 'Inscrit ✔' : "S'inscrire"}
@@ -301,3 +313,4 @@ const EventDetail = () => {
 };
 
 export default EventDetail;
+
