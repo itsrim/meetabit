@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useEvents } from '../context/EventContext';
 import { useFeatureFlags } from '../context/FeatureFlagContext';
-import { ArrowLeft, Image as ImageIcon, Users, Lock, Crown } from 'lucide-react';
+import { ArrowLeft, Image as ImageIcon, Users, Lock, Crown, MapPin, Eye, EyeOff } from 'lucide-react';
 import PageTransition from './PageTransition';
 import { toast } from 'sonner';
 
@@ -27,7 +27,8 @@ const CreateEvent = () => {
         time: '19:00',
         location: '',
         description: '',
-        maxAttendees: Math.min(20, maxParticipantsAllowed)
+        maxAttendees: Math.min(20, maxParticipantsAllowed),
+        hideAddressUntilRegistered: false
     });
 
     const handleSubmit = (e) => {
@@ -47,7 +48,8 @@ const CreateEvent = () => {
             description: formData.description,
             attendees: 1, // Me
             maxAttendees: Math.min(parseInt(formData.maxAttendees) || 20, maxParticipantsAllowed),
-            image: "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=800&q=80" // Default party image
+            image: "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=800&q=80", // Default party image
+            hideAddressUntilRegistered: formData.hideAddressUntilRegistered
         };
 
         addEvent(newEvent);
@@ -189,6 +191,67 @@ const CreateEvent = () => {
                             placeholder="Dites-nous en plus..."
                             style={{ resize: 'none' }}
                         />
+                    </div>
+
+                    {/* Option pour masquer l'adresse */}
+                    <div 
+                        className="card p-4"
+                        onClick={() => setFormData({ ...formData, hideAddressUntilRegistered: !formData.hideAddressUntilRegistered })}
+                        style={{ 
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            gap: '12px'
+                        }}
+                    >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                            <div style={{
+                                width: '40px',
+                                height: '40px',
+                                borderRadius: '10px',
+                                background: formData.hideAddressUntilRegistered ? '#fef3c7' : '#f3f4f6',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center'
+                            }}>
+                                {formData.hideAddressUntilRegistered ? (
+                                    <EyeOff size={20} color="#f59e0b" />
+                                ) : (
+                                    <MapPin size={20} color="#9ca3af" />
+                                )}
+                            </div>
+                            <div>
+                                <div style={{ fontWeight: '600', fontSize: '14px', color: 'var(--color-text)' }}>
+                                    Masquer l'adresse
+                                </div>
+                                <div style={{ fontSize: '12px', color: 'var(--color-text-muted)' }}>
+                                    {formData.hideAddressUntilRegistered 
+                                        ? "Visible uniquement pour les participants" 
+                                        : "Adresse visible par tous"}
+                                </div>
+                            </div>
+                        </div>
+                        <div style={{
+                            width: '44px',
+                            height: '26px',
+                            borderRadius: '13px',
+                            background: formData.hideAddressUntilRegistered ? '#f59e0b' : '#d1d5db',
+                            display: 'flex',
+                            alignItems: 'center',
+                            padding: '2px',
+                            transition: 'background 0.2s'
+                        }}>
+                            <div style={{
+                                width: '22px',
+                                height: '22px',
+                                borderRadius: '50%',
+                                background: 'white',
+                                boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+                                transform: formData.hideAddressUntilRegistered ? 'translateX(18px)' : 'translateX(0)',
+                                transition: 'transform 0.2s'
+                            }} />
+                        </div>
                     </div>
 
                     <button type="submit" className="btn btn-primary mt-4 py-4 text-lg">

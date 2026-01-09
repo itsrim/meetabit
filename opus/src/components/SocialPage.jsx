@@ -168,30 +168,30 @@ const SocialPage = () => {
 
                 {/* Header with Gradient - Compact */}
                 <div style={{
-                    background: 'linear-gradient(135deg, #73f755ff 0%, #4649efff 50%, #ec4899 100%)',
+                    background: 'linear-gradient(135deg, #fbbf24 0%, #f472b6 100%)',
                     padding: '12px 16px 16px',
                     borderBottomLeftRadius: '24px',
                     borderBottomRightRadius: '24px',
-                    boxShadow: '0 10px 30px rgba(217, 70, 239, 0.2)',
+                    boxShadow: '0 10px 30px rgba(244, 114, 182, 0.3)',
                     marginBottom: '0'
                 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-                        <h1 style={{ fontSize: '22px', fontWeight: '800', color: 'white' }}>Amitié</h1>
+                        <h1 style={{ fontSize: '22px', fontWeight: '800', color: '#111827' }}>Amitié</h1>
                         <button 
                             disabled={searchDisabled}
                             style={{
                                 width: '36px', height: '36px',
                                 borderRadius: '50%',
-                                background: searchDisabled ? 'rgba(0,0,0,0.3)' : 'rgba(255,255,255,0.2)',
+                                background: searchDisabled ? 'rgba(0,0,0,0.15)' : 'rgba(255,255,255,0.4)',
                                 backdropFilter: 'blur(10px)',
-                                border: '1px solid rgba(255,255,255,0.3)',
+                                border: '1px solid rgba(0,0,0,0.1)',
                                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                                 cursor: searchDisabled ? 'not-allowed' : 'pointer',
                                 opacity: searchDisabled ? 0.7 : 1,
                                 position: 'relative'
                             }}
                         >
-                            <Search size={18} color="white" />
+                            <Search size={18} color="#111827" />
                             {searchDisabled && (
                                 <div style={{
                                     position: 'absolute',
@@ -228,7 +228,7 @@ const SocialPage = () => {
                                         width: '52px', height: '52px',
                                         borderRadius: '50%',
                                         padding: '2px',
-                                        background: friend.msg > 0 ? 'linear-gradient(45deg, #f97316, #ec4899)' : 'rgba(255,255,255,0.3)'
+                                        background: friend.msg > 0 ? 'linear-gradient(45deg, #ef4444, #ec4899)' : 'rgba(0,0,0,0.15)'
                                     }}>
                                         <div style={{
                                             width: '100%', height: '100%',
@@ -256,7 +256,7 @@ const SocialPage = () => {
                                         </div>
                                     )}
                                 </div>
-                                <span style={{ fontSize: '11px', fontWeight: '500', color: 'white' }}>{friend.name}</span>
+                                <span style={{ fontSize: '11px', fontWeight: '600', color: '#111827' }}>{friend.name}</span>
                             </div>
                         ))}
                     </div>

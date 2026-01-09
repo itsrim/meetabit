@@ -15,11 +15,21 @@ const EventSearch = () => {
     const { isRestricted, isPremium } = useFeatureFlags();
     const [selectedCategory, setSelectedCategory] = useState("Tout");
     
-    const blurEventAddress = isRestricted('blurEventAddress');
     const searchDisabled = isRestricted('disableSearch');
 
-    // Mocking more events for masonry effect
-    const allEvents = [...events, ...events, ...events].slice(0, 10);
+    // Trier les événements par date et horaire
+    const sortedEvents = [...events].sort((a, b) => {
+        // D'abord par date
+        const dateCompare = a.date - b.date;
+        if (dateCompare !== 0) return dateCompare;
+        // Ensuite par horaire
+        const timeA = a.time.split(':').map(Number);
+        const timeB = b.time.split(':').map(Number);
+        return (timeA[0] * 60 + timeA[1]) - (timeB[0] * 60 + timeB[1]);
+    });
+
+    // Events pour le masonry
+    const allEvents = sortedEvents.slice(0, 10);
 
     return (
         <PageTransition>
@@ -28,12 +38,12 @@ const EventSearch = () => {
                 {/* NEW HEADER - Compact */}
                 <div style={{
                     flexShrink: 0,
-                    background: 'linear-gradient(135deg,rgb(228, 247, 85) 0%,rgb(70, 93, 239) 50%, #ec4899 100%)',
+                    background: 'linear-gradient(135deg, #fbbf24 0%, #f472b6 100%)',
                     padding: '16px 20px 20px',
                     borderBottomLeftRadius: '30px',
                     borderBottomRightRadius: '30px',
-                    color: 'white',
-                    boxShadow: '0 10px 30px rgba(217, 70, 239, 0.2)',
+                    color: '#111827',
+                    boxShadow: '0 10px 30px rgba(244, 114, 182, 0.3)',
                     zIndex: 10,
                     marginBottom: '12px'
                 }}>
@@ -41,9 +51,9 @@ const EventSearch = () => {
                         {/* Search Input */}
                         <div style={{
                             flex: 1,
-                            background: searchDisabled ? 'rgba(0,0,0,0.2)' : 'rgba(255,255,255,0.15)',
+                            background: searchDisabled ? 'rgba(0,0,0,0.15)' : 'rgba(255,255,255,0.3)',
                             backdropFilter: 'blur(10px)',
-                            border: '1px solid rgba(255,255,255,0.2)',
+                            border: '1px solid rgba(0,0,0,0.1)',
                             borderRadius: '20px',
                             padding: '10px 16px',
                             display: 'flex',
@@ -52,7 +62,7 @@ const EventSearch = () => {
                             opacity: searchDisabled ? 0.7 : 1
                         }}>
                             <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-                                <Search size={20} color="rgba(255,255,255,0.8)" />
+                                <Search size={20} color="rgba(0,0,0,0.6)" />
                                 {searchDisabled && (
                                     <div style={{
                                         position: 'absolute',
@@ -81,14 +91,14 @@ const EventSearch = () => {
                                     flex: 1,
                                     fontSize: '15px',
                                     background: 'transparent',
-                                    color: 'white',
+                                    color: '#111827',
                                     cursor: searchDisabled ? 'not-allowed' : 'text'
                                 }}
-                                className="search-input-placeholder-white"
+                                className="search-input-placeholder-dark"
                             />
                             {!searchDisabled && (
                                 <button style={{
-                                    background: 'rgba(255,255,255,0.2)',
+                                    background: 'rgba(0,0,0,0.1)',
                                     borderRadius: '50%',
                                     width: '32px',
                                     height: '32px',
@@ -98,15 +108,15 @@ const EventSearch = () => {
                                     border: 'none',
                                     cursor: 'pointer'
                                 }}>
-                                    <SlidersHorizontal size={16} color="white" />
+                                    <SlidersHorizontal size={16} color="#111827" />
                                 </button>
                             )}
                         </div>
                         {/* Bell Button - Outside input */}
                         <button style={{
-                            background: 'rgba(255,255,255,0.2)',
+                            background: 'rgba(255,255,255,0.4)',
                             backdropFilter: 'blur(10px)',
-                            border: '1px solid rgba(255,255,255,0.3)',
+                            border: '1px solid rgba(0,0,0,0.1)',
                             borderRadius: '50%',
                             width: '48px',
                             height: '48px',
@@ -117,7 +127,7 @@ const EventSearch = () => {
                             position: 'relative',
                             flexShrink: 0
                         }}>
-                            <Bell size={20} color="white" />
+                            <Bell size={20} color="#111827" />
                             <div style={{ position: 'absolute', top: '10px', right: '10px', width: '10px', height: '10px', background: '#facc15', borderRadius: '50%', border: '2px solid rgba(255,255,255,0.5)' }}></div>
                         </button>
                     </div>
@@ -138,7 +148,7 @@ const EventSearch = () => {
                         scrollbarWidth: 'none',
                         msOverflowStyle: 'none'
                     }}>
-                        {events.slice(0, 5).map((event, i) => (
+                        {sortedEvents.slice(0, 5).map((event, i) => (
                             <div
                                 key={i}
                                 onClick={() => navigate(`/event/${event.id}`)}
@@ -168,13 +178,18 @@ const EventSearch = () => {
                                     <h3 style={{ color: 'white', fontWeight: '700', fontSize: '16px', marginBottom: '4px' }}>{event.title}</h3>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                                         <MapPin size={12} color="#d1d5db" />
-                                        <span style={{ 
-                                            color: '#d1d5db', 
-                                            fontSize: '12px',
-                                            filter: blurEventAddress ? 'blur(4px)' : 'none'
-                                        }}>
-                                            {blurEventAddress ? 'Adresse ••••••' : event.location.split(',')[0]}
-                                        </span>
+                                        {(() => {
+                                            const shouldHide = event.hideAddressUntilRegistered && !event.registered && !event.isOrganizer;
+                                            return (
+                                                <span style={{ 
+                                                    color: '#d1d5db', 
+                                                    fontSize: '12px',
+                                                    filter: shouldHide ? 'blur(4px)' : 'none'
+                                                }}>
+                                                    {shouldHide ? 'Inscrivez-vous' : event.location.split(',')[0]}
+                                                </span>
+                                            );
+                                        })()}
                                     </div>
                                 </div>
                             </div>
@@ -263,13 +278,18 @@ const EventSearch = () => {
                                             <h4 style={{ fontSize: '12px', fontWeight: '700', color: '#18181b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                                                 {event.title}
                                             </h4>
-                                            <span style={{ 
-                                                fontSize: '10px', 
-                                                color: '#71717a',
-                                                filter: blurEventAddress ? 'blur(4px)' : 'none'
-                                            }}>
-                                                {blurEventAddress ? 'Adresse ••••••' : event.location.split(',')[0]}
-                                            </span>
+                                            {(() => {
+                                                const shouldHide = event.hideAddressUntilRegistered && !event.registered && !event.isOrganizer;
+                                                return (
+                                                    <span style={{ 
+                                                        fontSize: '10px', 
+                                                        color: '#71717a',
+                                                        filter: shouldHide ? 'blur(4px)' : 'none'
+                                                    }}>
+                                                        {shouldHide ? 'Inscrivez-vous' : event.location.split(',')[0]}
+                                                    </span>
+                                                );
+                                            })()}
                                         </div>
                                         <div style={{ fontSize: '12px', fontWeight: '800', color: '#f97316' }}>
                                             {event.date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}

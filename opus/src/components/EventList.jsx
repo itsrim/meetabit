@@ -133,47 +133,51 @@ const EventCard = ({ event, onToggle, onToggleFavorite, isLast, featureFlags, re
                             </div>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '3px', overflow: 'hidden' }}>
                                 <MapPin size={11} style={{ flexShrink: 0 }} />
-                                <span style={{ 
-                                    whiteSpace: 'nowrap', 
-                                    overflow: 'hidden', 
-                                    textOverflow: 'ellipsis',
-                                    filter: featureFlags.blurEventAddress ? 'blur(4px)' : 'none'
-                                }}>
-                                    {featureFlags.blurEventAddress ? 'Adresse ••••••' : event.location.split(',')[0]}
-                                </span>
+                                {(() => {
+                                    const shouldHideAddress = event.hideAddressUntilRegistered && !isRegistered && !isOrganizer;
+                                    return (
+                                        <span style={{ 
+                                            whiteSpace: 'nowrap', 
+                                            overflow: 'hidden', 
+                                            textOverflow: 'ellipsis',
+                                            filter: shouldHideAddress ? 'blur(4px)' : 'none'
+                                        }}>
+                                            {shouldHideAddress ? 'Inscrivez-vous pour voir' : event.location.split(',')[0]}
+                                        </span>
+                                    );
+                                })()}
                             </div>
                         </div>
                     </div>
 
-                    {/* Participants + Bouton */}
+                    {/* Organisateur + Participants + Bouton */}
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        {/* Compteur participants - contrôlé par feature flag */}
-                        {featureFlags.showAttendeeCount ? (
-                            <div style={{ 
-                                display: 'flex', 
-                                alignItems: 'center', 
-                                gap: '4px',
-                                fontSize: '11px',
-                                color: event.attendees >= event.maxAttendees * 0.9 ? '#ef4444' : 'var(--color-text-muted)'
-                            }}>
-                                <Users size={12} />
-                                <span style={{ fontWeight: event.attendees >= event.maxAttendees * 0.9 ? '600' : '400' }}>
-                                    {event.attendees}/{event.maxAttendees}
-                                </span>
-                            </div>
-                        ) : <div />}
-                        {isOrganizer ? (
-                            <span style={{ 
-                                fontSize: '10px', 
-                                fontWeight: '600', 
-                                color: 'var(--color-primary)',
-                                padding: '4px 8px',
-                                background: 'var(--color-primary-light)',
-                                borderRadius: '6px'
-                            }}>
-                                Organisateur
-                            </span>
-                        ) : (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            {/* Compteur participants - contrôlé par feature flag */}
+                            {featureFlags.showAttendeeCount && (
+                                <div style={{ 
+                                    display: 'flex', 
+                                    alignItems: 'center', 
+                                    gap: '4px',
+                                    fontSize: '11px',
+                                    color: 'var(--color-text-muted)'
+                                }}>
+                                    <Users size={12} />
+                                    <span>
+                                        {event.attendees}/{event.maxAttendees}
+                                    </span>
+                                </div>
+                            )}
+                        </div>
+                        {/* Organisateur en couleur */}
+                        <span style={{ 
+                            fontSize: '10px',
+                            fontWeight: '600',
+                            color: isOrganizer ? '#ec4899' : '#6366f1'
+                        }}>
+                            {isOrganizer ? 'Organisateur' : event.organizer}
+                        </span>
+                        {!isOrganizer && (
                             <button
                                 onClick={(e) => handleActionClick(e, () => onToggle(event.id))}
                                 style={{
@@ -243,7 +247,12 @@ const EventList = () => {
                 e.date.getDate() === currentDay.getDate() &&
                 e.date.getMonth() === currentDay.getMonth() &&
                 e.date.getFullYear() === currentDay.getFullYear()
-            );
+            ).sort((a, b) => {
+                // Trier par horaire
+                const timeA = a.time.split(':').map(Number);
+                const timeB = b.time.split(':').map(Number);
+                return (timeA[0] * 60 + timeA[1]) - (timeB[0] * 60 + timeB[1]);
+            });
 
             // Marquer l'index du premier événement de la date sélectionnée
             if (dayEvents.length > 0 && 

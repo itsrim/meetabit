@@ -13,16 +13,6 @@ const CalendarStrip = () => {
     // Toggle view function
     const toggleView = () => setWeekly(!isWeekly);
 
-    // Handle Drag for Expand/Collapse
-    const handleDragEnd = (event, info) => {
-        const swipeThreshold = 50;
-        if (info.offset.y > swipeThreshold && isWeekly) {
-            setWeekly(false); // Drag Down -> Open Month
-        } else if (info.offset.y < -swipeThreshold && !isWeekly) {
-            setWeekly(true); // Drag Up -> Close to Week
-        }
-    };
-
     return (
         <div
             {...handlers}
@@ -57,7 +47,7 @@ const CalendarStrip = () => {
                 initial={false}
                 animate={{ height: isWeekly ? 90 : 360 }} // Increased height slightly for bigger circles
                 transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                style={{ overflow: 'hidden' }}
+                style={{ overflow: 'hidden', position: 'relative', zIndex: 2 }}
             >
                 <AnimatePresence mode="wait" initial={false} custom={direction}>
                     <motion.div
@@ -145,28 +135,22 @@ const CalendarStrip = () => {
                 </AnimatePresence>
             </motion.div>
 
-            {/* Pull Handle for Smooth Unfold - Draggable */}
-            <motion.div
-                drag="y"
-                dragConstraints={{ top: 0, bottom: 0 }}
-                dragElastic={0.2}
-                onDragEnd={handleDragEnd}
+            {/* Small arrow indicator */}
+            <div 
                 onClick={toggleView}
                 style={{
                     display: 'flex',
                     justifyContent: 'center',
-                    padding: '2px 0',
-                    cursor: 'grab',
-                    touchAction: 'none'
+                    cursor: 'pointer',
+                    paddingTop: '4px'
                 }}
-                whileTap={{ cursor: 'grabbing' }}
             >
                 {isWeekly ? (
-                    <ChevronDown size={20} color="var(--color-text-muted)" />
+                    <ChevronDown size={16} color="rgba(255,255,255,0.5)" />
                 ) : (
-                    <ChevronUp size={20} color="var(--color-text-muted)" />
+                    <ChevronUp size={16} color="rgba(255,255,255,0.5)" />
                 )}
-            </motion.div>
+            </div>
         </div>
     );
 };

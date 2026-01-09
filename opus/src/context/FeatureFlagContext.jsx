@@ -27,9 +27,9 @@ const DEFAULT_CONFIG = {
         freeOnly: true
     },
     blurEventAddress: {
-        value: true,
-        label: 'Adresses floutées',
-        description: 'L\'adresse exacte des événements est masquée',
+        value: false,
+        label: 'Adresses floutées (obsolète)',
+        description: 'Géré par l\'organisateur de chaque événement',
         category: 'Restrictions Free',
         freeOnly: true
     },

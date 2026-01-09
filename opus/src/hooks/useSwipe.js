@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 
 const useSwipe = (initialDate) => {
     const [currentDate, setCurrentDate] = useState(initialDate || new Date());
@@ -6,10 +6,10 @@ const useSwipe = (initialDate) => {
     const [direction, setDirection] = useState(0);
 
     // Swipe State
-    const [touchStart, setTouchStart] = useState(null);
-    const [touchEnd, setTouchEnd] = useState(null);
-
-    // Reset current date if initialDate changes significantly? No, let's keep navigation independent.
+    const [touchStartX, setTouchStartX] = useState(null);
+    const [touchStartY, setTouchStartY] = useState(null);
+    const [touchEndX, setTouchEndX] = useState(null);
+    const [touchEndY, setTouchEndY] = useState(null);
 
     const next = () => {
         setDirection(1);
@@ -37,26 +37,40 @@ const useSwipe = (initialDate) => {
     const minSwipeDistance = 50;
 
     const onTouchStart = (e) => {
-        setTouchEnd(null);
-        setTouchStart(e.targetTouches[0].clientX);
+        setTouchEndX(null);
+        setTouchEndY(null);
+        setTouchStartX(e.targetTouches[0].clientX);
+        setTouchStartY(e.targetTouches[0].clientY);
     };
 
     const onTouchMove = (e) => {
-        setTouchEnd(e.targetTouches[0].clientX);
+        setTouchEndX(e.targetTouches[0].clientX);
+        setTouchEndY(e.targetTouches[0].clientY);
     };
 
     const onTouchEnd = () => {
-        if (!touchStart || !touchEnd) return;
+        if (!touchStartX || !touchStartY) return;
 
-        const distance = touchStart - touchEnd;
-        const isLeftSwipe = distance > minSwipeDistance;
-        const isRightSwipe = distance < -minSwipeDistance;
+        const distanceX = touchStartX - (touchEndX || touchStartX);
+        const distanceY = touchStartY - (touchEndY || touchStartY);
 
-        if (isLeftSwipe) {
-            next();
-        }
-        if (isRightSwipe) {
-            prev();
+        // Determine if horizontal or vertical swipe
+        if (Math.abs(distanceX) > Math.abs(distanceY)) {
+            // Horizontal swipe - navigation
+            if (distanceX > minSwipeDistance) {
+                next();
+            } else if (distanceX < -minSwipeDistance) {
+                prev();
+            }
+        } else {
+            // Vertical swipe - toggle view
+            if (distanceY > minSwipeDistance && !isWeekly) {
+                // Swipe up -> collapse to week
+                setWeekly(true);
+            } else if (distanceY < -minSwipeDistance && isWeekly) {
+                // Swipe down -> expand to month
+                setWeekly(false);
+            }
         }
     };
 
@@ -73,7 +87,7 @@ const useSwipe = (initialDate) => {
         next,
         prev,
         direction,
-        handlers // Return swipe handlers to attach to div
+        handlers
     };
 };
 

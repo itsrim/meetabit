@@ -21,6 +21,12 @@ const LOCATIONS = [
 
 const TIMES = ["08:00", "09:30", "10:00", "11:00", "12:30", "14:00", "15:30", "17:00", "18:30", "19:00", "20:00", "21:00"];
 
+const ORGANIZER_NAMES = [
+    "Sophie M.", "Lucas D.", "Emma W.", "Thomas R.", "Léa P.", "Hugo B.", 
+    "Camille V.", "Nathan L.", "Chloé G.", "Maxime F.", "Julie K.", "Antoine S.",
+    "Marie C.", "Alexandre T.", "Sarah J.", "Pierre N.", "Clara H.", "Julien M."
+];
+
 // Génère ~30 événements par jour pour tout janvier 2026 (31 jours * ~30 = ~930 événements)
 const generateMassiveEvents = () => {
     const events = [];
@@ -32,6 +38,7 @@ const generateMassiveEvents = () => {
         for (let i = 0; i < eventsPerDay; i++) {
             const maxAttendees = [20, 30, 50, 75, 100, 150, 200][Math.floor(Math.random() * 7)];
             const attendees = Math.floor(Math.random() * maxAttendees * 0.95) + 5;
+            const isOrganizer = Math.random() > 0.9;
             events.push({
                 id: id++,
                 title: EVENT_TITLES[Math.floor(Math.random() * EVENT_TITLES.length)] + ` #${id}`,
@@ -43,9 +50,11 @@ const generateMassiveEvents = () => {
                 maxAttendees,
                 description: `Événement passionnant du ${day} janvier. Rejoignez-nous pour une expérience unique !`,
                 registered: Math.random() > 0.7, // 30% de chance d'être inscrit
-                isOrganizer: Math.random() > 0.9, // 10% de chance d'être organisateur
+                isOrganizer, // 10% de chance d'être organisateur
+                organizer: isOrganizer ? 'Moi' : ORGANIZER_NAMES[Math.floor(Math.random() * ORGANIZER_NAMES.length)],
                 price: Math.random() > 0.3 ? Math.floor(Math.random() * 150) + 5 : 0,
-                favorite: Math.random() > 0.85 // 15% de chance d'être en favoris
+                favorite: Math.random() > 0.85, // 15% de chance d'être en favoris
+                hideAddressUntilRegistered: Math.random() > 0.6 // 40% masquent l'adresse aux non-inscrits
             });
         }
     }
@@ -61,7 +70,13 @@ export const EventProvider = ({ children }) => {
 
     const addEvent = (newEvent) => {
         // New events created by me are Organizer=true
-        setEvents([...events, { ...newEvent, id: Date.now(), registered: true, isOrganizer: true }]);
+        setEvents([...events, { 
+            ...newEvent, 
+            id: Date.now(), 
+            registered: true, 
+            isOrganizer: true,
+            hideAddressUntilRegistered: newEvent.hideAddressUntilRegistered || false
+        }]);
     };
 
     const toggleRegistration = (eventId) => {

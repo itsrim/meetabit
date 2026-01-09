@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useEvents } from '../context/EventContext';
-import { useFeatureFlags } from '../context/FeatureFlagContext';
 import { ArrowLeft, MapPin, Clock, Share2, Heart, MessageCircle, Lock } from 'lucide-react';
 import PageTransition from './PageTransition';
 import BlurImage from './BlurImage';
@@ -19,10 +18,7 @@ const EventDetail = () => {
     const { id } = useParams();
     const navigate = useNavigate();
     const { events, toggleRegistration } = useEvents();
-    const { isRestricted } = useFeatureFlags();
     
-    const blurEventAddress = isRestricted('blurEventAddress');
-
     const event = events.find(e => e.id.toString() === id);
 
     if (!event) return <div className="p-4">Événement non trouvé</div>;
@@ -155,21 +151,26 @@ const EventDetail = () => {
                                 <MapPin size={24} style={{ color: 'var(--color-text-muted)' }} />
                             </div>
                             <div>
-                                <div style={{ 
-                                    fontWeight: '500', 
-                                    color: 'var(--color-text-muted)',
-                                    filter: blurEventAddress ? 'blur(5px)' : 'none',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '6px'
-                                }}>
-                                    {blurEventAddress ? (
-                                        <>
-                                            <span>Adresse masquée</span>
-                                            <Lock size={12} color="#f59e0b" />
-                                        </>
-                                    ) : event.location}
-                                </div>
+                                {(() => {
+                                    const shouldHideAddress = event.hideAddressUntilRegistered && !event.registered && !event.isOrganizer;
+                                    return (
+                                        <div style={{ 
+                                            fontWeight: '500', 
+                                            color: 'var(--color-text-muted)',
+                                            filter: shouldHideAddress ? 'blur(5px)' : 'none',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '6px'
+                                        }}>
+                                            {shouldHideAddress ? (
+                                                <>
+                                                    <span>Inscrivez-vous pour voir l'adresse</span>
+                                                    <Lock size={12} color="#f59e0b" />
+                                                </>
+                                            ) : event.location}
+                                        </div>
+                                    );
+                                })()}
                             </div>
                         </div>
                         <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
