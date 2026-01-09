@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { Search, Bell, SlidersHorizontal, MapPin } from 'lucide-react';
+import { Search, Bell, SlidersHorizontal, MapPin, Lock, Crown } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useEvents } from '../context/EventContext';
+import { useFeatureFlags } from '../context/FeatureFlagContext';
 import PageTransition from './PageTransition';
 import BlurImage from './BlurImage';
 import './SearchInput.css';
@@ -11,7 +12,11 @@ const CATEGORIES = ["Tout", "Sorties", "Musée", "Sport", "Rando", "Danse", "Ver
 const EventSearch = () => {
     const navigate = useNavigate();
     const { events } = useEvents();
+    const { isRestricted, isPremium } = useFeatureFlags();
     const [selectedCategory, setSelectedCategory] = useState("Tout");
+    
+    const blurEventAddress = isRestricted('blurEventAddress');
+    const searchDisabled = isRestricted('disableSearch');
 
     // Mocking more events for masonry effect
     const allEvents = [...events, ...events, ...events].slice(0, 10);
@@ -23,7 +28,7 @@ const EventSearch = () => {
                 {/* NEW HEADER - Compact */}
                 <div style={{
                     flexShrink: 0,
-                    background: 'linear-gradient(135deg, #73f755ff 0%, #4649efff 50%, #ec4899 100%)',
+                    background: 'linear-gradient(135deg,rgb(228, 247, 85) 0%,rgb(70, 93, 239) 50%, #ec4899 100%)',
                     padding: '16px 20px 20px',
                     borderBottomLeftRadius: '30px',
                     borderBottomRightRadius: '30px',
@@ -36,7 +41,7 @@ const EventSearch = () => {
                         {/* Search Input */}
                         <div style={{
                             flex: 1,
-                            background: 'rgba(255,255,255,0.15)',
+                            background: searchDisabled ? 'rgba(0,0,0,0.2)' : 'rgba(255,255,255,0.15)',
                             backdropFilter: 'blur(10px)',
                             border: '1px solid rgba(255,255,255,0.2)',
                             borderRadius: '20px',
@@ -44,34 +49,58 @@ const EventSearch = () => {
                             display: 'flex',
                             alignItems: 'center',
                             gap: '12px',
+                            opacity: searchDisabled ? 0.7 : 1
                         }}>
-                            <Search size={20} color="rgba(255,255,255,0.8)" />
+                            <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                                <Search size={20} color="rgba(255,255,255,0.8)" />
+                                {searchDisabled && (
+                                    <div style={{
+                                        position: 'absolute',
+                                        top: '-8px',
+                                        right: '-10px',
+                                        background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)',
+                                        borderRadius: '50%',
+                                        width: '16px',
+                                        height: '16px',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        boxShadow: '0 2px 4px rgba(251, 191, 36, 0.4)'
+                                    }}>
+                                        <Crown size={9} color="white" />
+                                    </div>
+                                )}
+                            </div>
                             <input
                                 type="text"
-                                placeholder="Rechercher un événement..."
+                                placeholder={searchDisabled ? "Recherche Premium" : "Rechercher un événement..."}
+                                disabled={searchDisabled}
                                 style={{
                                     border: 'none',
                                     outline: 'none',
                                     flex: 1,
                                     fontSize: '15px',
                                     background: 'transparent',
-                                    color: 'white'
+                                    color: 'white',
+                                    cursor: searchDisabled ? 'not-allowed' : 'text'
                                 }}
                                 className="search-input-placeholder-white"
                             />
-                            <button style={{
-                                background: 'rgba(255,255,255,0.2)',
-                                borderRadius: '50%',
-                                width: '32px',
-                                height: '32px',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                border: 'none',
-                                cursor: 'pointer'
-                            }}>
-                                <SlidersHorizontal size={16} color="white" />
-                            </button>
+                            {!searchDisabled && (
+                                <button style={{
+                                    background: 'rgba(255,255,255,0.2)',
+                                    borderRadius: '50%',
+                                    width: '32px',
+                                    height: '32px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    border: 'none',
+                                    cursor: 'pointer'
+                                }}>
+                                    <SlidersHorizontal size={16} color="white" />
+                                </button>
+                            )}
                         </div>
                         {/* Bell Button - Outside input */}
                         <button style={{
@@ -139,7 +168,13 @@ const EventSearch = () => {
                                     <h3 style={{ color: 'white', fontWeight: '700', fontSize: '16px', marginBottom: '4px' }}>{event.title}</h3>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                                         <MapPin size={12} color="#d1d5db" />
-                                        <span style={{ color: '#d1d5db', fontSize: '12px' }}>{event.location.split(',')[0]}</span>
+                                        <span style={{ 
+                                            color: '#d1d5db', 
+                                            fontSize: '12px',
+                                            filter: blurEventAddress ? 'blur(4px)' : 'none'
+                                        }}>
+                                            {blurEventAddress ? 'Adresse ••••••' : event.location.split(',')[0]}
+                                        </span>
                                     </div>
                                 </div>
                             </div>
@@ -228,7 +263,13 @@ const EventSearch = () => {
                                             <h4 style={{ fontSize: '12px', fontWeight: '700', color: '#18181b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                                                 {event.title}
                                             </h4>
-                                            <span style={{ fontSize: '10px', color: '#71717a' }}>{event.location.split(',')[0]}</span>
+                                            <span style={{ 
+                                                fontSize: '10px', 
+                                                color: '#71717a',
+                                                filter: blurEventAddress ? 'blur(4px)' : 'none'
+                                            }}>
+                                                {blurEventAddress ? 'Adresse ••••••' : event.location.split(',')[0]}
+                                            </span>
                                         </div>
                                         <div style={{ fontSize: '12px', fontWeight: '800', color: '#f97316' }}>
                                             {event.date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}

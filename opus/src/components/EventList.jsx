@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import CalendarStrip from './CalendarStrip';
 import { MapPin, Clock, Users, Send, CheckCircle, Plus, Scan, Heart } from 'lucide-react';
 import { useEvents } from '../context/EventContext';
+import { useFeatureFlags } from '../context/FeatureFlagContext';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import PageTransition from './PageTransition';
@@ -9,11 +10,14 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Virtuoso } from 'react-virtuoso';
 import BlurImage from './BlurImage';
 
-const EventCard = ({ event, onToggle, onToggleFavorite, isLast }) => {
+const EventCard = ({ event, onToggle, onToggleFavorite, isLast, featureFlags, registrationCount, favoriteCount }) => {
     const navigate = useNavigate();
     const isRegistered = event.registered;
     const isOrganizer = event.isOrganizer;
     const isFavorite = event.favorite;
+    
+    const canRegister = isRegistered || registrationCount < featureFlags.maxRegistrations;
+    const canFavorite = isFavorite || favoriteCount < featureFlags.maxFavorites;
 
     const handleCardClick = () => {
         navigate(`/event/${event.id}`);
@@ -21,6 +25,10 @@ const EventCard = ({ event, onToggle, onToggleFavorite, isLast }) => {
 
     const handleActionClick = (e, action) => {
         e.stopPropagation();
+        if (!isRegistered && !canRegister) {
+            toast.error(`Limite de ${featureFlags.maxRegistrations} inscriptions atteinte ! 🔒`);
+            return;
+        }
         action();
         if (!isRegistered) {
             toast.success("Inscription réussie ! 🎟️");
@@ -31,6 +39,10 @@ const EventCard = ({ event, onToggle, onToggleFavorite, isLast }) => {
 
     const handleFavoriteClick = (e) => {
         e.stopPropagation();
+        if (!isFavorite && !canFavorite) {
+            toast.error(`Limite de ${featureFlags.maxFavorites} favoris atteinte ! 🔒`);
+            return;
+        }
         onToggleFavorite(event.id);
         if (!isFavorite) {
             toast.success("Ajouté aux favoris ❤️");
@@ -55,45 +67,49 @@ const EventCard = ({ event, onToggle, onToggleFavorite, isLast }) => {
                         src={event.image || "https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?auto=format&fit=crop&w=800&q=80"}
                         alt={event.title}
                     />
-                    {/* Bouton favori */}
-                    <button
-                        onClick={handleFavoriteClick}
-                        style={{
+                    {/* Bouton favori - contrôlé par feature flag */}
+                    {featureFlags.favoriteButton && (
+                        <button
+                            onClick={handleFavoriteClick}
+                            style={{
+                                position: 'absolute',
+                                top: '6px',
+                                right: '6px',
+                                background: isFavorite ? '#ec4899' : 'rgba(0,0,0,0.4)',
+                                border: 'none',
+                                borderRadius: '50%',
+                                width: '26px',
+                                height: '26px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                cursor: 'pointer',
+                                transition: 'all 0.2s ease'
+                            }}
+                        >
+                            <Heart 
+                                size={14} 
+                                color="white" 
+                                fill={isFavorite ? 'white' : 'transparent'}
+                            />
+                        </button>
+                    )}
+                    {/* Prix overlay - contrôlé par feature flag */}
+                    {featureFlags.showEventPrice && (
+                        <div style={{
                             position: 'absolute',
-                            top: '6px',
-                            right: '6px',
-                            background: isFavorite ? '#ec4899' : 'rgba(0,0,0,0.4)',
-                            border: 'none',
-                            borderRadius: '50%',
-                            width: '26px',
-                            height: '26px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            cursor: 'pointer',
-                            transition: 'all 0.2s ease'
-                        }}
-                    >
-                        <Heart 
-                            size={14} 
-                            color="white" 
-                            fill={isFavorite ? 'white' : 'transparent'}
-                        />
-                    </button>
-                    {/* Prix overlay */}
-                    <div style={{
-                        position: 'absolute',
-                        bottom: '6px',
-                        left: '6px',
-                        background: '#111827',
-                        color: 'white',
-                        padding: '2px 6px',
-                        borderRadius: '6px',
-                        fontWeight: '700',
-                        fontSize: '10px'
-                    }}>
-                        {(event.price !== undefined && event.price !== null) ? (event.price === 0 ? 'Gratuit' : `${event.price}€`) : ''}
-                    </div>
+                            bottom: '6px',
+                            left: '6px',
+                            background: '#111827',
+                            color: 'white',
+                            padding: '2px 6px',
+                            borderRadius: '6px',
+                            fontWeight: '700',
+                            fontSize: '10px'
+                        }}>
+                            {(event.price !== undefined && event.price !== null) ? (event.price === 0 ? 'Gratuit' : `${event.price}€`) : ''}
+                        </div>
+                    )}
                 </div>
 
                 {/* Contenu à droite */}
@@ -117,8 +133,13 @@ const EventCard = ({ event, onToggle, onToggleFavorite, isLast }) => {
                             </div>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '3px', overflow: 'hidden' }}>
                                 <MapPin size={11} style={{ flexShrink: 0 }} />
-                                <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                                    {event.location.split(',')[0]}
+                                <span style={{ 
+                                    whiteSpace: 'nowrap', 
+                                    overflow: 'hidden', 
+                                    textOverflow: 'ellipsis',
+                                    filter: featureFlags.blurEventAddress ? 'blur(4px)' : 'none'
+                                }}>
+                                    {featureFlags.blurEventAddress ? 'Adresse ••••••' : event.location.split(',')[0]}
                                 </span>
                             </div>
                         </div>
@@ -126,18 +147,21 @@ const EventCard = ({ event, onToggle, onToggleFavorite, isLast }) => {
 
                     {/* Participants + Bouton */}
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <div style={{ 
-                            display: 'flex', 
-                            alignItems: 'center', 
-                            gap: '4px',
-                            fontSize: '11px',
-                            color: event.attendees >= event.maxAttendees * 0.9 ? '#ef4444' : 'var(--color-text-muted)'
-                        }}>
-                            <Users size={12} />
-                            <span style={{ fontWeight: event.attendees >= event.maxAttendees * 0.9 ? '600' : '400' }}>
-                                {event.attendees}/{event.maxAttendees}
-                            </span>
-                        </div>
+                        {/* Compteur participants - contrôlé par feature flag */}
+                        {featureFlags.showAttendeeCount ? (
+                            <div style={{ 
+                                display: 'flex', 
+                                alignItems: 'center', 
+                                gap: '4px',
+                                fontSize: '11px',
+                                color: event.attendees >= event.maxAttendees * 0.9 ? '#ef4444' : 'var(--color-text-muted)'
+                            }}>
+                                <Users size={12} />
+                                <span style={{ fontWeight: event.attendees >= event.maxAttendees * 0.9 ? '600' : '400' }}>
+                                    {event.attendees}/{event.maxAttendees}
+                                </span>
+                            </div>
+                        ) : <div />}
                         {isOrganizer ? (
                             <span style={{ 
                                 fontSize: '10px', 
@@ -178,10 +202,29 @@ const EventCard = ({ event, onToggle, onToggleFavorite, isLast }) => {
 };
 
 const EventList = () => {
-    const { events, selectedDate, setSelectedDate, toggleRegistration, toggleFavorite } = useEvents();
+    const { events, selectedDate, setSelectedDate, toggleRegistration, toggleFavorite, getFavoriteEvents } = useEvents();
+    const { isEnabled, isRestricted, getLimits } = useFeatureFlags();
     const [allItems, setAllItems] = useState([]);
     const [currentVisibleDate, setCurrentVisibleDate] = useState(selectedDate);
     const [initialIndex, setInitialIndex] = useState(0);
+
+    const limits = getLimits();
+    const today = new Date();
+    
+    // Compteurs pour les limites
+    const registrationCount = events.filter(e => e.registered && !e.isOrganizer && e.date >= today).length;
+    const favoriteCount = getFavoriteEvents().length;
+    
+    // Feature flags pour les cartes d'événements
+    const featureFlags = {
+        favoriteButton: isEnabled('favoriteButton'),
+        showEventPrice: isEnabled('showEventPrice'),
+        showAttendeeCount: isEnabled('showAttendeeCount'),
+        blurEventAddress: isRestricted('blurEventAddress'),
+        limitRegistrations: isRestricted('limitRegistrations'),
+        maxRegistrations: limits.maxRegistrations,
+        maxFavorites: limits.maxFavorites
+    };
 
     // Générer une liste d'événements pour tout le mois de janvier
     useEffect(() => {
@@ -289,6 +332,9 @@ const EventList = () => {
                                     onToggle={toggleRegistration}
                                     onToggleFavorite={toggleFavorite}
                                     isLast={index === allItems.length - 1}
+                                    featureFlags={featureFlags}
+                                    registrationCount={registrationCount}
+                                    favoriteCount={favoriteCount}
                                 />
                             )}
                         />

@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useEvents } from '../context/EventContext';
-import { ArrowLeft, MapPin, Clock, Share2, Heart, MessageCircle } from 'lucide-react';
+import { useFeatureFlags } from '../context/FeatureFlagContext';
+import { ArrowLeft, MapPin, Clock, Share2, Heart, MessageCircle, Lock } from 'lucide-react';
 import PageTransition from './PageTransition';
 import BlurImage from './BlurImage';
 import { toast } from 'sonner';
@@ -18,6 +19,9 @@ const EventDetail = () => {
     const { id } = useParams();
     const navigate = useNavigate();
     const { events, toggleRegistration } = useEvents();
+    const { isRestricted } = useFeatureFlags();
+    
+    const blurEventAddress = isRestricted('blurEventAddress');
 
     const event = events.find(e => e.id.toString() === id);
 
@@ -151,7 +155,21 @@ const EventDetail = () => {
                                 <MapPin size={24} style={{ color: 'var(--color-text-muted)' }} />
                             </div>
                             <div>
-                                <div style={{ fontWeight: '500', color: 'var(--color-text-muted)' }}>{event.location}</div>
+                                <div style={{ 
+                                    fontWeight: '500', 
+                                    color: 'var(--color-text-muted)',
+                                    filter: blurEventAddress ? 'blur(5px)' : 'none',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '6px'
+                                }}>
+                                    {blurEventAddress ? (
+                                        <>
+                                            <span>Adresse masquée</span>
+                                            <Lock size={12} color="#f59e0b" />
+                                        </>
+                                    ) : event.location}
+                                </div>
                             </div>
                         </div>
                         <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>

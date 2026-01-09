@@ -1,9 +1,10 @@
 import React from 'react';
 import { Virtuoso } from 'react-virtuoso';
-import { MessageCircle, Heart, Search, Users, Sparkles } from 'lucide-react';
+import { MessageCircle, Heart, Search, Users, Sparkles, Lock, Crown, Eye } from 'lucide-react';
 import PageTransition from './PageTransition';
 import BlurImage from './BlurImage';
 import { useNavigate } from 'react-router-dom';
+import { useFeatureFlags } from '../context/FeatureFlagContext';
 
 const FRIENDS = [
     { id: 1, name: 'Hanna', image: 'https://i.pravatar.cc/150?img=1', msg: 2 },
@@ -43,8 +44,25 @@ const MESSAGES = [
     { id: 6, name: 'Rosella', age: 21, message: 'Maybe tomorrow?', time: 'Last week', unread: true, image: 'https://i.pravatar.cc/150?img=35' },
 ];
 
+// Visites du profil (Premium only)
+const VISITORS = [
+    { id: 1, name: 'Clara', age: 24, time: 'Il y a 2 min', image: 'https://i.pravatar.cc/150?img=41', visits: 3 },
+    { id: 2, name: 'Lucas', age: 27, time: 'Il y a 15 min', image: 'https://i.pravatar.cc/150?img=42', visits: 1 },
+    { id: 3, name: 'Manon', age: 22, time: 'Il y a 1h', image: 'https://i.pravatar.cc/150?img=43', visits: 5 },
+    { id: 4, name: 'Hugo', age: 25, time: 'Il y a 3h', image: 'https://i.pravatar.cc/150?img=44', visits: 2 },
+    { id: 5, name: 'Léa', age: 23, time: 'Hier', image: 'https://i.pravatar.cc/150?img=45', visits: 1 },
+    { id: 6, name: 'Nathan', age: 28, time: 'Hier', image: 'https://i.pravatar.cc/150?img=46', visits: 4 },
+    { id: 7, name: 'Camille', age: 21, time: 'Il y a 2 jours', image: 'https://i.pravatar.cc/150?img=47', visits: 1 },
+    { id: 8, name: 'Gabriel', age: 26, time: 'Il y a 3 jours', image: 'https://i.pravatar.cc/150?img=48', visits: 2 },
+];
+
 const SocialPage = () => {
     const [activeTab, setActiveTab] = React.useState('suggestions');
+    const { isRestricted, isPremium } = useFeatureFlags();
+    
+    const blurProfiles = isRestricted('blurProfiles');
+    const disableMessages = isRestricted('disableMessages');
+    const searchDisabled = isRestricted('disableSearch');
 
     // Render 2 items per row to simulate grid in Virtuoso
     const rows = [];
@@ -70,10 +88,40 @@ const SocialPage = () => {
                             marginTop: `${item.offset}px`,
                         }}
                     >
-                        <BlurImage
-                            src={item.image}
-                            alt={item.name}
-                        />
+                        {/* Image avec blur conditionnel */}
+                        <div style={{ 
+                            width: '100%', 
+                            height: '100%',
+                            filter: blurProfiles ? 'blur(15px)' : 'none',
+                            transform: blurProfiles ? 'scale(1.1)' : 'none'
+                        }}>
+                            <BlurImage
+                                src={item.image}
+                                alt={item.name}
+                            />
+                        </div>
+                        
+                        {/* Overlay Premium si profils floutés */}
+                        {blurProfiles && (
+                            <div style={{
+                                position: 'absolute',
+                                top: '50%',
+                                left: '50%',
+                                transform: 'translate(-50%, -50%)',
+                                background: 'rgba(0,0,0,0.6)',
+                                backdropFilter: 'blur(5px)',
+                                borderRadius: '16px',
+                                padding: '16px 20px',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                alignItems: 'center',
+                                gap: '8px'
+                            }}>
+                                <Lock size={24} color="#fbbf24" />
+                                <span style={{ color: 'white', fontSize: '12px', fontWeight: '600' }}>Premium</span>
+                            </div>
+                        )}
+                        
                         <div style={{
                             position: 'absolute',
                             top: '12px',
@@ -98,7 +146,13 @@ const SocialPage = () => {
                             padding: '12px',
                             background: 'linear-gradient(to top, rgba(0,0,0,0.6), transparent)'
                         }}>
-                            <h3 style={{ color: 'white', fontWeight: '700', fontSize: '16px', textShadow: '0 2px 4px rgba(0,0,0,0.3)' }}>
+                            <h3 style={{ 
+                                color: 'white', 
+                                fontWeight: '700', 
+                                fontSize: '16px', 
+                                textShadow: '0 2px 4px rgba(0,0,0,0.3)',
+                                filter: blurProfiles ? 'blur(8px)' : 'none'
+                            }}>
                                 {item.name}, {item.age}
                             </h3>
                         </div>
@@ -112,37 +166,69 @@ const SocialPage = () => {
         <PageTransition>
             <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', background: 'white' }}>
 
-                {/* Header */}
-                <div style={{ padding: '24px 24px 0', marginBottom: '10px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-                        <h1 style={{ fontSize: '28px', fontWeight: '800' }}>Amitié</h1>
-                        <button style={{
-                            width: '44px', height: '44px',
-                            borderRadius: '50%', background: '#f3f4f6',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            border: 'none'
-                        }}>
-                            <Search size={22} color="#1f2937" />
+                {/* Header with Gradient - Compact */}
+                <div style={{
+                    background: 'linear-gradient(135deg, #73f755ff 0%, #4649efff 50%, #ec4899 100%)',
+                    padding: '12px 16px 16px',
+                    borderBottomLeftRadius: '24px',
+                    borderBottomRightRadius: '24px',
+                    boxShadow: '0 10px 30px rgba(217, 70, 239, 0.2)',
+                    marginBottom: '0'
+                }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                        <h1 style={{ fontSize: '22px', fontWeight: '800', color: 'white' }}>Amitié</h1>
+                        <button 
+                            disabled={searchDisabled}
+                            style={{
+                                width: '36px', height: '36px',
+                                borderRadius: '50%',
+                                background: searchDisabled ? 'rgba(0,0,0,0.3)' : 'rgba(255,255,255,0.2)',
+                                backdropFilter: 'blur(10px)',
+                                border: '1px solid rgba(255,255,255,0.3)',
+                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                cursor: searchDisabled ? 'not-allowed' : 'pointer',
+                                opacity: searchDisabled ? 0.7 : 1,
+                                position: 'relative'
+                            }}
+                        >
+                            <Search size={18} color="white" />
+                            {searchDisabled && (
+                                <div style={{
+                                    position: 'absolute',
+                                    top: '-6px',
+                                    right: '-6px',
+                                    background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)',
+                                    borderRadius: '50%',
+                                    width: '18px',
+                                    height: '18px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    boxShadow: '0 2px 4px rgba(251, 191, 36, 0.4)'
+                                }}>
+                                    <Crown size={10} color="white" />
+                                </div>
+                            )}
                         </button>
                     </div>
 
                     {/* Friends Horizontal Scroll */}
                     <div style={{
                         display: 'flex',
-                        gap: '20px',
+                        gap: '14px',
                         overflowX: 'auto',
-                        paddingBottom: '16px',
+                        paddingBottom: '4px',
                         scrollbarWidth: 'none',
                         msOverflowStyle: 'none'
                     }}>
                         {FRIENDS.map(friend => (
-                            <div key={friend.id} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
+                            <div key={friend.id} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', flexShrink: 0 }}>
                                 <div style={{ position: 'relative' }}>
                                     <div style={{
-                                        width: '64px', height: '64px',
+                                        width: '52px', height: '52px',
                                         borderRadius: '50%',
                                         padding: '2px',
-                                        background: friend.msg > 0 ? 'linear-gradient(45deg, #f97316, #ec4899)' : 'transparent'
+                                        background: friend.msg > 0 ? 'linear-gradient(45deg, #f97316, #ec4899)' : 'rgba(255,255,255,0.3)'
                                     }}>
                                         <div style={{
                                             width: '100%', height: '100%',
@@ -158,10 +244,10 @@ const SocialPage = () => {
                                     </div>
                                     {friend.msg > 0 && (
                                         <div style={{
-                                            position: 'absolute', bottom: '0', right: '0',
+                                            position: 'absolute', bottom: '-2px', right: '-2px',
                                             background: '#ef4444', color: 'white',
-                                            fontSize: '10px', fontWeight: 'bold',
-                                            width: '20px', height: '20px',
+                                            fontSize: '9px', fontWeight: 'bold',
+                                            width: '18px', height: '18px',
                                             borderRadius: '50%',
                                             display: 'flex', alignItems: 'center', justifyContent: 'center',
                                             border: '2px solid white'
@@ -170,60 +256,118 @@ const SocialPage = () => {
                                         </div>
                                     )}
                                 </div>
-                                <span style={{ fontSize: '13px', fontWeight: '500', color: '#374151' }}>{friend.name}</span>
+                                <span style={{ fontSize: '11px', fontWeight: '500', color: 'white' }}>{friend.name}</span>
                             </div>
                         ))}
                     </div>
                 </div>
 
                 {/* Main Content Area */}
-                <div style={{ flex: 1, background: '#f9fafb', borderTopLeftRadius: '32px', borderTopRightRadius: '32px', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+                <div style={{ flex: 1, background: '#f9fafb', borderTopLeftRadius: '24px', borderTopRightRadius: '24px', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
 
                     {/* Data Tabs */}
-                    <div style={{ padding: '24px 24px 16px', display: 'flex', gap: '24px' }}>
+                    <div style={{ padding: '14px 16px 10px', display: 'flex', gap: '20px' }}>
                         <button
                             onClick={() => setActiveTab('suggestions')}
                             style={{
                                 background: 'transparent', border: 'none', padding: 0,
-                                fontSize: '18px', fontWeight: activeTab === 'suggestions' ? '800' : '600',
+                                fontSize: '15px', fontWeight: activeTab === 'suggestions' ? '800' : '600',
                                 color: activeTab === 'suggestions' ? '#111827' : '#9ca3af',
                                 transition: 'color 0.2s',
-                                paddingBottom: '8px',
-                                borderBottom: activeTab === 'suggestions' ? '3px solid #111827' : '3px solid transparent'
+                                paddingBottom: '6px',
+                                borderBottom: activeTab === 'suggestions' ? '2px solid #111827' : '2px solid transparent'
                             }}
                         >
                             Suggestions
                         </button>
                         <button
-                            onClick={() => setActiveTab('messages')}
+                            onClick={() => !disableMessages && setActiveTab('messages')}
                             style={{
                                 background: 'transparent', border: 'none', padding: 0,
-                                fontSize: '18px', fontWeight: activeTab === 'messages' ? '800' : '600',
-                                color: activeTab === 'messages' ? '#111827' : '#9ca3af',
+                                fontSize: '15px', fontWeight: activeTab === 'messages' ? '800' : '600',
+                                color: disableMessages ? '#d1d5db' : (activeTab === 'messages' ? '#111827' : '#9ca3af'),
                                 transition: 'color 0.2s',
-                                display: 'flex', alignItems: 'center', gap: '6px',
-                                paddingBottom: '8px',
-                                borderBottom: activeTab === 'messages' ? '3px solid #111827' : '3px solid transparent'
+                                display: 'flex', alignItems: 'center', gap: '5px',
+                                paddingBottom: '6px',
+                                borderBottom: activeTab === 'messages' ? '2px solid #111827' : '2px solid transparent',
+                                cursor: disableMessages ? 'not-allowed' : 'pointer',
+                                opacity: disableMessages ? 0.5 : 1
                             }}
                         >
                             Messages
-                            <span style={{
-                                background: '#ef4444', color: 'white',
-                                fontSize: '12px', fontWeight: 'bold',
-                                padding: '2px 8px', borderRadius: '12px',
-                            }}>3</span>
+                            {!disableMessages && (
+                                <span style={{
+                                    background: '#ef4444', color: 'white',
+                                    fontSize: '10px', fontWeight: 'bold',
+                                    padding: '2px 6px', borderRadius: '10px',
+                                }}>3</span>
+                            )}
+                            {disableMessages && (
+                                <div style={{
+                                    background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)',
+                                    borderRadius: '50%',
+                                    width: '18px',
+                                    height: '18px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    boxShadow: '0 2px 4px rgba(251, 191, 36, 0.4)'
+                                }}>
+                                    <Crown size={10} color="white" />
+                                </div>
+                            )}
+                        </button>
+                        <button
+                            onClick={() => isPremium && setActiveTab('visitors')}
+                            style={{
+                                background: 'transparent', border: 'none', padding: 0,
+                                fontSize: '15px', fontWeight: activeTab === 'visitors' ? '800' : '600',
+                                color: !isPremium ? '#d1d5db' : (activeTab === 'visitors' ? '#111827' : '#9ca3af'),
+                                transition: 'color 0.2s',
+                                display: 'flex', alignItems: 'center', gap: '5px',
+                                paddingBottom: '6px',
+                                borderBottom: activeTab === 'visitors' ? '2px solid #fbbf24' : '2px solid transparent',
+                                cursor: !isPremium ? 'not-allowed' : 'pointer',
+                                opacity: !isPremium ? 0.5 : 1
+                            }}
+                        >
+                            <Eye size={14} />
+                            Visites
+                            {isPremium && (
+                                <span style={{
+                                    background: '#fbbf24', color: 'white',
+                                    fontSize: '10px', fontWeight: 'bold',
+                                    padding: '2px 6px', borderRadius: '10px',
+                                }}>{VISITORS.length}</span>
+                            )}
+                            {!isPremium && (
+                                <div style={{
+                                    background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)',
+                                    borderRadius: '50%',
+                                    width: '18px',
+                                    height: '18px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    boxShadow: '0 2px 4px rgba(251, 191, 36, 0.4)'
+                                }}>
+                                    <Crown size={10} color="white" />
+                                </div>
+                            )}
                         </button>
                     </div>
 
                     {/* Content Switcher */}
                     <div style={{ flex: 1, position: 'relative' }}>
-                        {activeTab === 'suggestions' ? (
+                        {activeTab === 'suggestions' && (
                             <Virtuoso
                                 style={{ height: '100%', paddingBottom: '100px' }}
                                 data={rows}
                                 itemContent={(index) => <Row index={index} style={{}} />}
                             />
-                        ) : (
+                        )}
+                        
+                        {activeTab === 'messages' && (
                             <div style={{ padding: '0 24px 100px', overflowY: 'auto', height: '100%' }}>
                                 {MESSAGES.map(msg => (
                                     <div key={msg.id} style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '24px', cursor: 'pointer' }}>
@@ -261,6 +405,90 @@ const SocialPage = () => {
                                                 {msg.message}
                                             </p>
                                         </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+
+                        {activeTab === 'visitors' && (
+                            <div style={{ padding: '0 24px 100px', overflowY: 'auto', height: '100%' }}>
+                                {/* Premium Badge */}
+                                <div style={{
+                                    background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)',
+                                    borderRadius: '16px',
+                                    padding: '16px',
+                                    marginBottom: '20px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '12px'
+                                }}>
+                                    <Crown size={24} color="white" />
+                                    <div>
+                                        <div style={{ color: 'white', fontWeight: '700', fontSize: '14px' }}>
+                                            Fonctionnalité Premium
+                                        </div>
+                                        <div style={{ color: 'rgba(255,255,255,0.8)', fontSize: '12px' }}>
+                                            {VISITORS.length} personnes ont visité votre profil
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {VISITORS.map(visitor => (
+                                    <div key={visitor.id} style={{ 
+                                        display: 'flex', 
+                                        alignItems: 'center', 
+                                        gap: '16px', 
+                                        marginBottom: '16px', 
+                                        cursor: 'pointer',
+                                        padding: '12px',
+                                        background: 'white',
+                                        borderRadius: '16px',
+                                        boxShadow: '0 2px 8px rgba(0,0,0,0.05)'
+                                    }}>
+                                        <div style={{ position: 'relative' }}>
+                                            <div style={{ width: '56px', height: '56px', borderRadius: '50%', overflow: 'hidden' }}>
+                                                <BlurImage
+                                                    src={visitor.image}
+                                                    alt={visitor.name}
+                                                />
+                                            </div>
+                                            {visitor.visits > 1 && (
+                                                <div style={{
+                                                    position: 'absolute', bottom: '-4px', right: '-4px',
+                                                    background: '#fbbf24',
+                                                    color: 'white',
+                                                    fontSize: '10px',
+                                                    fontWeight: 'bold',
+                                                    padding: '2px 6px',
+                                                    borderRadius: '10px',
+                                                    border: '2px solid white'
+                                                }}>
+                                                    x{visitor.visits}
+                                                </div>
+                                            )}
+                                        </div>
+                                        <div style={{ flex: 1 }}>
+                                            <h3 style={{ fontSize: '15px', fontWeight: '700', color: '#111827', marginBottom: '2px' }}>
+                                                {visitor.name}, {visitor.age}
+                                            </h3>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                                <Eye size={12} color="#9ca3af" />
+                                                <span style={{ fontSize: '12px', color: '#9ca3af' }}>{visitor.time}</span>
+                                            </div>
+                                        </div>
+                                        <button style={{
+                                            background: 'linear-gradient(135deg, #ec4899 0%, #f43f5e 100%)',
+                                            color: 'white',
+                                            border: 'none',
+                                            padding: '8px 16px',
+                                            borderRadius: '20px',
+                                            fontSize: '12px',
+                                            fontWeight: '600',
+                                            cursor: 'pointer'
+                                        }}>
+                                            <Heart size={12} style={{ marginRight: '4px', display: 'inline' }} />
+                                            Like
+                                        </button>
                                     </div>
                                 ))}
                             </div>

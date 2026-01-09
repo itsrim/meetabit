@@ -30,7 +30,7 @@ const CalendarStrip = () => {
             style={{
                 borderBottomLeftRadius: '32px',
                 borderBottomRightRadius: '32px',
-                background: 'linear-gradient(135deg,rgb(51, 164, 79) 0%,rgb(65, 40, 204) 30%,rgb(212, 74, 166) 100%)',
+                background: 'linear-gradient(135deg,rgb(225, 242, 40) 0%,rgb(218, 232, 92) 30%,rgb(212, 74, 166) 100%)',
                 overflow: 'hidden',
                 paddingBottom: '10px',
                 boxShadow: '0 10px 30px -10px rgba(0,0,0,0.5)'

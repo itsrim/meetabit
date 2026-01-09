@@ -1,13 +1,25 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useEvents } from '../context/EventContext';
-import { ArrowLeft, Image as ImageIcon, Users } from 'lucide-react';
+import { useFeatureFlags } from '../context/FeatureFlagContext';
+import { ArrowLeft, Image as ImageIcon, Users, Lock, Crown } from 'lucide-react';
 import PageTransition from './PageTransition';
 import { toast } from 'sonner';
 
 const CreateEvent = () => {
     const navigate = useNavigate();
-    const { addEvent } = useEvents();
+    const { addEvent, events } = useEvents();
+    const { isRestricted, getLimits, isPremium } = useFeatureFlags();
+    
+    const limits = getLimits();
+    const limitEventCreation = isRestricted('limitEventCreation');
+    const limitParticipants = isRestricted('limitParticipants');
+    
+    // Vérifier si l'utilisateur a déjà un événement actif (organisateur)
+    const today = new Date();
+    const myActiveEvents = events.filter(e => e.isOrganizer && e.date >= today);
+    const canCreateEvent = !limitEventCreation || myActiveEvents.length < limits.maxActiveEvents;
+    const maxParticipantsAllowed = limits.maxParticipants;
 
     const [formData, setFormData] = useState({
         title: '',
@@ -15,11 +27,17 @@ const CreateEvent = () => {
         time: '19:00',
         location: '',
         description: '',
-        maxAttendees: 50
+        maxAttendees: Math.min(20, maxParticipantsAllowed)
     });
 
     const handleSubmit = (e) => {
         e.preventDefault();
+        
+        if (!canCreateEvent) {
+            toast.error("Limite atteinte ! Passez en Premium pour créer plus d'événements.");
+            return;
+        }
+        
         // Create new event object
         const newEvent = {
             title: formData.title,
@@ -28,7 +46,7 @@ const CreateEvent = () => {
             location: formData.location || 'Lieu secret',
             description: formData.description,
             attendees: 1, // Me
-            maxAttendees: parseInt(formData.maxAttendees) || 50,
+            maxAttendees: Math.min(parseInt(formData.maxAttendees) || 20, maxParticipantsAllowed),
             image: "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=800&q=80" // Default party image
         };
 
@@ -45,7 +63,50 @@ const CreateEvent = () => {
                     <h1 className="font-bold text-xl">Créer un événement</h1>
                 </div>
 
-                <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+                {/* Alerte si limite atteinte */}
+                {!canCreateEvent && (
+                    <div style={{
+                        background: '#fef3c7',
+                        border: '1px solid #fbbf24',
+                        borderRadius: '12px',
+                        padding: '16px',
+                        marginBottom: '16px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '12px'
+                    }}>
+                        <Lock size={24} color="#f59e0b" />
+                        <div style={{ flex: 1 }}>
+                            <div style={{ fontWeight: '700', color: '#92400e', marginBottom: '4px' }}>
+                                Limite atteinte
+                            </div>
+                            <div style={{ fontSize: '13px', color: '#a16207' }}>
+                                Vous avez déjà {myActiveEvents.length} événement(s) actif(s). 
+                                Passez en Premium pour en créer plus.
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Info limite participants */}
+                {limitParticipants && (
+                    <div style={{
+                        background: '#f3f4f6',
+                        borderRadius: '12px',
+                        padding: '12px 16px',
+                        marginBottom: '16px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        fontSize: '13px',
+                        color: 'var(--color-text-muted)'
+                    }}>
+                        <Users size={16} />
+                        <span>Limite de <strong>{maxParticipantsAllowed}</strong> participants max (Premium: 20)</span>
+                    </div>
+                )}
+
+                <form onSubmit={handleSubmit} className="flex flex-col gap-4" style={{ opacity: canCreateEvent ? 1 : 0.5, pointerEvents: canCreateEvent ? 'auto' : 'none' }}>
                     <div
                         className="card flex items-center justify-center text-muted"
                         style={{ height: '150px', border: '2px dashed var(--color-border)', cursor: 'pointer' }}
@@ -104,16 +165,16 @@ const CreateEvent = () => {
                         <div className="flex flex-col gap-2" style={{ width: '120px' }}>
                             <label className="text-sm font-bold flex items-center gap-1">
                                 <Users size={14} />
-                                Max
+                                Max {limitParticipants && <Lock size={10} color="#f59e0b" />}
                             </label>
                             <input
                                 type="number"
                                 min="1"
-                                max="1000"
+                                max={maxParticipantsAllowed}
                                 className="card p-3"
                                 value={formData.maxAttendees}
-                                onChange={e => setFormData({ ...formData, maxAttendees: e.target.value })}
-                                placeholder="50"
+                                onChange={e => setFormData({ ...formData, maxAttendees: Math.min(parseInt(e.target.value) || 1, maxParticipantsAllowed) })}
+                                placeholder={String(maxParticipantsAllowed)}
                             />
                         </div>
                     </div>

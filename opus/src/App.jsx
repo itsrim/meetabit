@@ -1,11 +1,12 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
-import { Calendar, User, QrCode, Home, PlusCircle, Search, MessageCircle, Plus } from 'lucide-react';
+import { Calendar, User, QrCode, Home, PlusCircle, Search, MessageCircle, Plus, Lock, Crown } from 'lucide-react';
 import { AnimatePresence } from 'framer-motion';
 import { Toaster } from 'sonner';
 import './index.css';
 
 import { EventProvider } from './context/EventContext';
+import { FeatureFlagProvider, useFeatureFlags } from './context/FeatureFlagContext';
 
 // Components
 import EventList from './components/EventList';
@@ -18,12 +19,14 @@ import SocialPage from './components/SocialPage';
 
 function Navigation() {
   const location = useLocation();
+  const { isRestricted } = useFeatureFlags();
   const isActive = (path) => location.pathname === path;
+  const searchDisabled = isRestricted('disableSearch');
 
   // Hide nav on Detail pages
   if (location.pathname.startsWith('/event/')) return null;
 
-  const NavItem = ({ to, icon: Icon, label }) => {
+  const NavItem = ({ to, icon: Icon, label, isPremiumLocked }) => {
     const active = isActive(to);
     return (
       <Link to={to} style={{
@@ -34,9 +37,29 @@ function Navigation() {
         color: active ? '#be185d' : 'var(--color-text-muted)',
         gap: '4px',
         flex: 1,
-        zIndex: 1
+        zIndex: 1,
+        position: 'relative'
       }}>
-        <Icon size={24} strokeWidth={active ? 2.5 : 2} />
+        <div style={{ position: 'relative' }}>
+          <Icon size={24} strokeWidth={active ? 2.5 : 2} />
+          {isPremiumLocked && (
+            <div style={{
+              position: 'absolute',
+              top: '-4px',
+              right: '-8px',
+              background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)',
+              borderRadius: '50%',
+              width: '16px',
+              height: '16px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: '0 2px 4px rgba(251, 191, 36, 0.4)'
+            }}>
+              <Crown size={10} color="white" />
+            </div>
+          )}
+        </div>
         <span style={{ fontSize: '10px', fontWeight: active ? '600' : '400' }}>{label}</span>
       </Link>
     );
@@ -147,14 +170,16 @@ import { ThemeProvider } from './context/ThemeContext';
 function App() {
   return (
     <ThemeProvider>
-      <EventProvider>
-        <Toaster position="top-center" richColors theme="system" />
-        <Router>
-          <Layout>
-            <AnimatedRoutes />
-          </Layout>
-        </Router>
-      </EventProvider>
+      <FeatureFlagProvider>
+        <EventProvider>
+          <Toaster position="top-center" richColors theme="system" />
+          <Router>
+            <Layout>
+              <AnimatedRoutes />
+            </Layout>
+          </Router>
+        </EventProvider>
+      </FeatureFlagProvider>
     </ThemeProvider>
   );
 }
