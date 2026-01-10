@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ChevronLeft, Award, ShieldCheck, Heart, Calendar } from 'lucide-react';
+import { ArrowLeft, Award, ShieldCheck, Heart, Calendar, MessageCircle } from 'lucide-react';
 import PageTransition from './PageTransition';
 import BlurImage from './BlurImage';
 import { useVisits, getUserData, CURRENT_USER_ID } from '../context/VisitContext';
@@ -31,7 +31,6 @@ const BADGES_LIST = [
     ['Geek', 'Passionné(e)', 'Cool']
 ];
 
-// Données supplémentaires pour le profil complet
 const getFullUserData = (userId: number) => {
     const baseData = getUserData(userId);
     const bio = BIOS[userId % BIOS.length];
@@ -49,62 +48,35 @@ const UserProfile: React.FC = () => {
     const navigate = useNavigate();
     const { recordVisit } = useVisits();
     const userId = parseInt(id || '0');
-    
-    // Enregistrer la visite quand on ouvre le profil
+    const user = getFullUserData(userId);
+
     useEffect(() => {
-        // L'utilisateur connecté (CURRENT_USER_ID) visite ce profil
         recordVisit(CURRENT_USER_ID, userId);
     }, [userId, recordVisit]);
-    
-    // Récupérer les données utilisateur avec la même logique que SocialPage
-    const user = getFullUserData(userId);
 
     return (
         <PageTransition>
-            <div style={{ minHeight: '100vh', background: 'var(--color-background)' }}>
-                {/* Header avec bouton retour */}
+            <div className="p-4 pb-24">
+                {/* Header simple comme CreateEvent */}
+                <div className="flex items-center gap-4 mb-6">
+                    <button onClick={() => navigate(-1)}><ArrowLeft size={24} /></button>
+                    <h1 className="font-bold text-xl">Profil</h1>
+                </div>
+
+                {/* Photo et infos */}
                 <div style={{
                     position: 'relative',
                     height: '280px',
-                    overflow: 'hidden'
+                    borderRadius: '24px',
+                    overflow: 'hidden',
+                    marginBottom: '20px'
                 }}>
-                    {/* Image de couverture */}
-                    <div style={{ width: '100%', height: '100%' }}>
-                        <BlurImage src={user.image} alt={user.name} />
-                    </div>
-                    
-                    {/* Overlay gradient */}
+                    <BlurImage src={user.image} alt={user.name} />
                     <div style={{
                         position: 'absolute',
                         inset: 0,
-                        background: 'linear-gradient(to bottom, rgba(0,0,0,0.3) 0%, transparent 30%, rgba(0,0,0,0.7) 100%)'
+                        background: 'linear-gradient(to bottom, transparent 50%, rgba(0,0,0,0.7) 100%)'
                     }} />
-                    
-                    {/* Bouton retour */}
-                    <button
-                        onClick={() => navigate(-1)}
-                        style={{
-                            position: 'absolute',
-                            top: '16px',
-                            left: '16px',
-                            width: '40px',
-                            height: '40px',
-                            borderRadius: '50%',
-                            background: 'rgba(0,0,0,0.4)',
-                            backdropFilter: 'blur(10px)',
-                            border: 'none',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            cursor: 'pointer',
-                            color: 'white',
-                            zIndex: 10
-                        }}
-                    >
-                        <ChevronLeft size={24} />
-                    </button>
-
-                    {/* Infos sur l'image */}
                     <div style={{
                         position: 'absolute',
                         bottom: '20px',
@@ -129,84 +101,84 @@ const UserProfile: React.FC = () => {
                     </div>
                 </div>
 
-                {/* Contenu du profil */}
-                <div style={{ padding: '20px', paddingBottom: '100px' }}>
-                    {/* Bio */}
-                    <div className="card" style={{ padding: '16px', marginBottom: '16px' }}>
-                        <p style={{ color: 'var(--color-text)', fontSize: '14px', lineHeight: '1.6' }}>
-                            {user.bio}
-                        </p>
-                        <div style={{ 
-                            marginTop: '12px', 
-                            paddingTop: '12px', 
-                            borderTop: '1px solid var(--color-border)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '6px',
-                            color: 'var(--color-text-muted)',
-                            fontSize: '12px'
-                        }}>
-                            <Calendar size={12} />
-                            Membre depuis {user.memberSince}
-                        </div>
-                    </div>
-
-                    {/* Stats */}
-                    <div style={{ display: 'flex', gap: '12px', marginBottom: '20px' }}>
-                        <div className="card" style={{ flex: 1, padding: '16px', textAlign: 'center' }}>
-                            <div style={{ fontSize: '24px', fontWeight: '800', color: 'var(--color-primary)' }}>
-                                {user.reliability.toFixed(1)}
-                            </div>
-                            <div style={{ fontSize: '11px', color: 'var(--color-text-muted)' }}>Fiabilité</div>
-                        </div>
-                        <div className="card" style={{ flex: 1, padding: '16px', textAlign: 'center' }}>
-                            <div style={{ fontSize: '24px', fontWeight: '800', color: 'var(--color-primary)' }}>
-                                {user.events}
-                            </div>
-                            <div style={{ fontSize: '11px', color: 'var(--color-text-muted)' }}>Événements</div>
-                        </div>
-                        <div className="card" style={{ flex: 1, padding: '16px', textAlign: 'center' }}>
-                            <div style={{ fontSize: '24px', fontWeight: '800', color: 'var(--color-primary)' }}>
-                                {user.friends}
-                            </div>
-                            <div style={{ fontSize: '11px', color: 'var(--color-text-muted)' }}>Amis</div>
-                        </div>
-                    </div>
-
-                    {/* Badges */}
-                    <h3 style={{ 
-                        fontSize: '16px', 
-                        fontWeight: '700', 
-                        color: 'var(--color-text)',
-                        marginBottom: '12px'
+                {/* Bio */}
+                <div className="card" style={{ padding: '16px', marginBottom: '16px' }}>
+                    <p style={{ color: 'var(--color-text)', fontSize: '14px', lineHeight: '1.6' }}>
+                        {user.bio}
+                    </p>
+                    <div style={{ 
+                        marginTop: '12px', 
+                        paddingTop: '12px', 
+                        borderTop: '1px solid var(--color-border)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        color: 'var(--color-text-muted)',
+                        fontSize: '12px'
                     }}>
-                        Badges
-                    </h3>
-                    <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '24px' }}>
-                        {user.badges.map((badge, i) => (
-                            <div key={i} className="card" style={{ 
-                                padding: '8px 14px', 
-                                display: 'flex', 
-                                alignItems: 'center', 
-                                gap: '8px'
-                            }}>
-                                <Award size={14} color="#eab308" />
-                                <span style={{ fontSize: '13px', fontWeight: '600', color: 'var(--color-text)' }}>
-                                    {badge}
-                                </span>
-                            </div>
-                        ))}
+                        <Calendar size={12} />
+                        Membre depuis {user.memberSince}
                     </div>
+                </div>
 
-                    {/* Actions */}
-                    <div style={{ display: 'flex', gap: '12px' }}>
-                        <button style={{
+                {/* Stats */}
+                <div style={{ display: 'flex', gap: '12px', marginBottom: '20px' }}>
+                    <div className="card" style={{ flex: 1, padding: '16px', textAlign: 'center' }}>
+                        <div style={{ fontSize: '24px', fontWeight: '800', color: 'var(--color-primary)' }}>
+                            {user.reliability.toFixed(1)}
+                        </div>
+                        <div style={{ fontSize: '11px', color: 'var(--color-text-muted)' }}>Fiabilité</div>
+                    </div>
+                    <div className="card" style={{ flex: 1, padding: '16px', textAlign: 'center' }}>
+                        <div style={{ fontSize: '24px', fontWeight: '800', color: 'var(--color-primary)' }}>
+                            {user.events}
+                        </div>
+                        <div style={{ fontSize: '11px', color: 'var(--color-text-muted)' }}>Événements</div>
+                    </div>
+                    <div className="card" style={{ flex: 1, padding: '16px', textAlign: 'center' }}>
+                        <div style={{ fontSize: '24px', fontWeight: '800', color: 'var(--color-primary)' }}>
+                            {user.friends}
+                        </div>
+                        <div style={{ fontSize: '11px', color: 'var(--color-text-muted)' }}>Amis</div>
+                    </div>
+                </div>
+
+                {/* Badges */}
+                <h3 style={{ 
+                    fontSize: '16px', 
+                    fontWeight: '700', 
+                    color: 'var(--color-text)',
+                    marginBottom: '12px'
+                }}>
+                    Badges
+                </h3>
+                <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '24px' }}>
+                    {user.badges.map((badge, i) => (
+                        <div key={i} className="card" style={{ 
+                            padding: '8px 14px', 
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            gap: '8px'
+                        }}>
+                            <Award size={14} color="#eab308" />
+                            <span style={{ fontSize: '13px', fontWeight: '600', color: 'var(--color-text)' }}>
+                                {badge}
+                            </span>
+                        </div>
+                    ))}
+                </div>
+
+                {/* Actions */}
+                <div style={{ display: 'flex', gap: '12px' }}>
+                    <button 
+                        onClick={() => navigate(`/chat/${userId}`)}
+                        style={{
                             flex: 1,
                             padding: '14px',
                             borderRadius: '16px',
-                            background: 'linear-gradient(135deg, #ec4899 0%, #f43f5e 100%)',
-                            color: 'white',
-                            border: 'none',
+                            background: 'var(--color-surface)',
+                            border: '1px solid var(--color-border)',
+                            color: 'var(--color-text)',
                             fontSize: '15px',
                             fontWeight: '700',
                             cursor: 'pointer',
@@ -214,11 +186,29 @@ const UserProfile: React.FC = () => {
                             alignItems: 'center',
                             justifyContent: 'center',
                             gap: '8px'
-                        }}>
-                            <Heart size={18} />
-                            Ajouter en ami
-                        </button>
-                    </div>
+                        }}
+                    >
+                        <MessageCircle size={18} />
+                        Message
+                    </button>
+                    <button style={{
+                        flex: 1,
+                        padding: '14px',
+                        borderRadius: '16px',
+                        background: 'linear-gradient(135deg, #ec4899 0%, #f43f5e 100%)',
+                        color: 'white',
+                        border: 'none',
+                        fontSize: '15px',
+                        fontWeight: '700',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '8px'
+                    }}>
+                        <Heart size={18} />
+                        Ajouter
+                    </button>
                 </div>
             </div>
         </PageTransition>

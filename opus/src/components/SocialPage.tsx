@@ -6,6 +6,7 @@ import PageTransition from './PageTransition';
 import BlurImage from './BlurImage';
 import { useFeatureFlags } from '../context/FeatureFlagContext';
 import { useVisits } from '../context/VisitContext';
+import { useMessages } from '../context/MessageContext';
 
 interface Friend {
     id: number;
@@ -24,15 +25,7 @@ interface Suggestion {
     offset: number;
 }
 
-interface Message {
-    id: number;
-    name: string;
-    age: number;
-    message: string;
-    time: string;
-    unread: boolean;
-    image: string;
-}
+// Interface Message est maintenant dans MessageContext
 
 // Interface Visitor est maintenant dans VisitContext (VisitorInfo)
 
@@ -65,14 +58,7 @@ const SUGGESTIONS: Suggestion[] = Array.from({ length: 1000 }, (_, i) => ({
     offset: (i * 11) % 45
 }));
 
-const MESSAGES: Message[] = [
-    { id: 1, name: 'Peggie', age: 23, message: 'That sounds like a lot of fun! Would you like...', time: '5 mins', unread: true, image: 'https://i.pravatar.cc/150?img=30' },
-    { id: 2, name: 'Eve', age: 22, message: "I'm good! Thanks", time: '38 mins', unread: false, image: 'https://i.pravatar.cc/150?img=31' },
-    { id: 3, name: 'Sofi', age: 26, message: 'Yes, it works for me! See you!', time: '2 hrs', unread: true, image: 'https://i.pravatar.cc/150?img=32' },
-    { id: 4, name: 'Rachel', age: 23, message: 'Yeah!', time: '8 hrs', unread: false, image: 'https://i.pravatar.cc/150?img=33' },
-    { id: 5, name: 'Roberta', age: 25, message: 'How are you doing?', time: '2 days', unread: false, image: 'https://i.pravatar.cc/150?img=34' },
-    { id: 6, name: 'Rosella', age: 21, message: 'Maybe tomorrow?', time: 'Last week', unread: true, image: 'https://i.pravatar.cc/150?img=35' },
-];
+// Les messages sont maintenant gérés par MessageContext
 
 // Les visites sont maintenant gérées par VisitContext
 
@@ -83,9 +69,29 @@ const SocialPage: React.FC = () => {
     const [activeTab, setActiveTab] = useState<TabType>('suggestions');
     const { isRestricted, isPremium } = useFeatureFlags();
     const { getMyVisitors } = useVisits();
+    const { getConversations, getTotalUnread } = useMessages();
     
     // Récupérer les vrais visiteurs depuis le contexte
     const visitors = getMyVisitors();
+    // Récupérer les vraies conversations
+    const conversations = getConversations();
+    const totalUnread = getTotalUnread();
+    
+    // Formater le temps relatif
+    const formatRelativeTime = (date: Date): string => {
+        const now = new Date();
+        const diffMs = now.getTime() - date.getTime();
+        const diffMins = Math.floor(diffMs / (1000 * 60));
+        const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+        const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+        if (diffMins < 1) return "À l'instant";
+        if (diffMins < 60) return `${diffMins} min`;
+        if (diffHours < 24) return `${diffHours}h`;
+        if (diffDays === 1) return 'Hier';
+        if (diffDays < 7) return `${diffDays}j`;
+        return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
+    };
     
     const blurProfiles = isRestricted('blurProfiles');
     const disableMessages = isRestricted('disableMessages');
@@ -334,12 +340,12 @@ const SocialPage: React.FC = () => {
                             }}
                         >
                             Messages
-                            {!disableMessages && (
+                            {!disableMessages && totalUnread > 0 && (
                                 <span style={{
                                     background: '#ef4444', color: 'white',
                                     fontSize: '10px', fontWeight: 'bold',
                                     padding: '2px 6px', borderRadius: '10px',
-                                }}>3</span>
+                                }}>{totalUnread}</span>
                             )}
                             {disableMessages && (
                                 <div style={{
@@ -408,44 +414,74 @@ const SocialPage: React.FC = () => {
                         
                         {activeTab === 'messages' && (
                             <div style={{ padding: '0 24px 100px', overflowY: 'auto', height: '100%' }}>
-                                {MESSAGES.map(msg => (
-                                    <div key={msg.id} style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '24px', cursor: 'pointer' }}>
-                                        <div style={{ position: 'relative' }}>
-                                            <div style={{ width: '56px', height: '56px', borderRadius: '50%', overflow: 'hidden' }}>
-                                                <BlurImage
-                                                    src={msg.image}
-                                                    alt={msg.name}
-                                                />
-                                            </div>
-                                            {msg.unread && (
-                                                <div style={{
-                                                    position: 'absolute', bottom: '2px', right: '2px',
-                                                    width: '12px', height: '12px',
-                                                    background: '#10b981',
-                                                    borderRadius: '50%',
-                                                    border: '2px solid white'
-                                                }}></div>
-                                            )}
-                                        </div>
-                                        <div style={{ flex: 1, paddingBottom: '12px', borderBottom: '1px solid var(--color-border)' }}>
-                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
-                                                <h3 style={{ fontSize: '16px', fontWeight: '700', color: 'var(--color-text)' }}>
-                                                    {msg.name}, {msg.age}
-                                                    {msg.unread && <span style={{ marginLeft: '6px', color: '#f97316', fontSize: '20px', lineHeight: 0 }}>•</span>}
-                                                </h3>
-                                                <span style={{ fontSize: '12px', color: 'var(--color-text-muted)', fontWeight: '500' }}>{msg.time}</span>
-                                            </div>
-                                            <p style={{
-                                                fontSize: '14px',
-                                                color: msg.unread ? 'var(--color-text)' : 'var(--color-text-muted)',
-                                                fontWeight: msg.unread ? '600' : '400',
-                                                whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '240px'
-                                            }}>
-                                                {msg.message}
-                                            </p>
-                                        </div>
+                                {conversations.length === 0 ? (
+                                    <div style={{
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        padding: '40px 20px',
+                                        color: 'var(--color-text-muted)',
+                                        textAlign: 'center'
+                                    }}>
+                                        <p style={{ fontSize: '14px' }}>Pas encore de messages.</p>
+                                        <p style={{ fontSize: '12px', marginTop: '8px' }}>Visitez des profils pour commencer à discuter !</p>
                                     </div>
-                                ))}
+                                ) : (
+                                    conversations.map(conv => (
+                                        <div 
+                                            key={conv.oderId} 
+                                            onClick={() => navigate(`/chat/${conv.oderId}`)}
+                                            style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '24px', cursor: 'pointer' }}
+                                        >
+                                            <div style={{ position: 'relative' }}>
+                                                <div style={{ width: '56px', height: '56px', borderRadius: '50%', overflow: 'hidden' }}>
+                                                    <BlurImage
+                                                        src={conv.image}
+                                                        alt={conv.name}
+                                                    />
+                                                </div>
+                                                {conv.unreadCount > 0 && (
+                                                    <div style={{
+                                                        position: 'absolute', bottom: '-2px', right: '-2px',
+                                                        minWidth: '20px', height: '20px',
+                                                        background: '#ef4444',
+                                                        borderRadius: '10px',
+                                                        border: '2px solid var(--color-surface)',
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        justifyContent: 'center',
+                                                        fontSize: '11px',
+                                                        fontWeight: '700',
+                                                        color: 'white',
+                                                        padding: '0 4px'
+                                                    }}>
+                                                        {conv.unreadCount}
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <div style={{ flex: 1, paddingBottom: '12px', borderBottom: '1px solid var(--color-border)' }}>
+                                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                                                    <h3 style={{ fontSize: '16px', fontWeight: '700', color: 'var(--color-text)' }}>
+                                                        {conv.name}, {conv.age}
+                                                        {conv.unreadCount > 0 && <span style={{ marginLeft: '6px', color: '#f97316', fontSize: '20px', lineHeight: 0 }}>•</span>}
+                                                    </h3>
+                                                    <span style={{ fontSize: '12px', color: 'var(--color-text-muted)', fontWeight: '500' }}>
+                                                        {formatRelativeTime(conv.lastMessageTime)}
+                                                    </span>
+                                                </div>
+                                                <p style={{
+                                                    fontSize: '14px',
+                                                    color: conv.unreadCount > 0 ? 'var(--color-text)' : 'var(--color-text-muted)',
+                                                    fontWeight: conv.unreadCount > 0 ? '600' : '400',
+                                                    whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '240px'
+                                                }}>
+                                                    {conv.lastMessage}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    ))
+                                )}
                             </div>
                         )}
 

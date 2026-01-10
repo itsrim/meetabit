@@ -8,6 +8,7 @@ import './index.css';
 import { EventProvider } from './context/EventContext';
 import { FeatureFlagProvider, useFeatureFlags } from './context/FeatureFlagContext';
 import { VisitProvider } from './context/VisitContext';
+import { MessageProvider } from './context/MessageContext';
 
 // Components
 import EventList from './components/EventList';
@@ -17,6 +18,7 @@ import EventDetail from './components/EventDetail';
 import EventSearch from './components/EventSearch';
 import SocialPage from './components/SocialPage';
 import UserProfile from './components/UserProfile';
+import Chat from './components/Chat';
 import { ThemeProvider } from './context/ThemeContext';
 import { LucideIcon } from 'lucide-react';
 
@@ -32,8 +34,8 @@ function Navigation() {
   const { isRestricted } = useFeatureFlags();
   const isActive = (path: string): boolean => location.pathname === path;
 
-  // Hide nav on Detail pages and User profiles
-  if (location.pathname.startsWith('/event/') || location.pathname.startsWith('/user/')) return null;
+  // Hide nav on Detail pages, User profiles and Chat
+  if (location.pathname.startsWith('/event/') || location.pathname.startsWith('/user/') || location.pathname.startsWith('/chat/')) return null;
 
   const NavItem: React.FC<NavItemProps> = ({ to, icon: Icon, label, isPremiumLocked }) => {
     const active = isActive(to);
@@ -146,20 +148,17 @@ function Navigation() {
 
 // Wrapper to handle AnimatePresence logic which needs access to useLocation
 function AnimatedRoutes() {
-  const location = useLocation();
-
   return (
-    <AnimatePresence mode="wait">
-      <Routes location={location} key={location.pathname}>
-        <Route path="/" element={<SocialPage />} />
-        <Route path="/search" element={<EventSearch />} />
-        <Route path="/calendar" element={<EventList />} />
-        <Route path="/create" element={<CreateEvent />} />
-        <Route path="/profile" element={<Profile />} />
-        <Route path="/event/:id" element={<EventDetail />} />
-        <Route path="/user/:id" element={<UserProfile />} />
-      </Routes>
-    </AnimatePresence>
+    <Routes>
+      <Route path="/" element={<SocialPage />} />
+      <Route path="/search" element={<EventSearch />} />
+      <Route path="/calendar" element={<EventList />} />
+      <Route path="/create" element={<CreateEvent />} />
+      <Route path="/profile" element={<Profile />} />
+      <Route path="/event/:id" element={<EventDetail />} />
+      <Route path="/user/:id" element={<UserProfile />} />
+      <Route path="/chat/:id" element={<Chat />} />
+    </Routes>
   );
 }
 
@@ -169,10 +168,12 @@ interface LayoutProps {
 
 function Layout({ children }: LayoutProps) {
   const location = useLocation();
-  const isDetails = location.pathname.startsWith('/event/');
+  const isFullScreen = location.pathname.startsWith('/event/') || 
+                       location.pathname.startsWith('/user/') || 
+                       location.pathname.startsWith('/chat/');
 
   return (
-    <div style={{ paddingBottom: isDetails ? '0' : '70px' }}>
+    <div style={{ paddingBottom: isFullScreen ? '0' : '70px' }}>
       {children}
       <Navigation />
     </div>
@@ -185,12 +186,14 @@ function App() {
       <FeatureFlagProvider>
         <EventProvider>
           <VisitProvider>
-            <Toaster position="top-center" richColors theme="system" />
-            <Router>
-              <Layout>
-                <AnimatedRoutes />
-              </Layout>
-            </Router>
+            <MessageProvider>
+              <Toaster position="top-center" richColors theme="system" />
+              <Router>
+                <Layout>
+                  <AnimatedRoutes />
+                </Layout>
+              </Router>
+            </MessageProvider>
           </VisitProvider>
         </EventProvider>
       </FeatureFlagProvider>
