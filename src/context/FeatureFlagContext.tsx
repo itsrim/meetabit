@@ -6,7 +6,7 @@ const FeatureFlagContext = createContext<FeatureFlagContextType | undefined>(und
 // Configuration Premium vs Free - using translation keys
 const DEFAULT_CONFIG: Config = {
     isPremium: {
-        value: false,
+        value: true,
         label: 'restrictions.premiumMode',
         description: 'restrictions.premiumModeDesc',
         category: 'Compte',
