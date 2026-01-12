@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react
 import { Calendar, User, Search, MessageCircle, Plus, Crown } from 'lucide-react';
 import { AnimatePresence } from 'framer-motion';
 import { Toaster } from 'sonner';
+import { useTranslation } from 'react-i18next';
 import './index.css';
 
 import { EventProvider } from './context/EventContext';
@@ -31,6 +32,7 @@ interface NavItemProps {
 
 function Navigation() {
   const location = useLocation();
+  const { t } = useTranslation();
   const { isRestricted } = useFeatureFlags();
   const isActive = (path: string): boolean => location.pathname === path;
 
@@ -108,15 +110,15 @@ function Navigation() {
         paddingBottom: '10px'
       }}>
         {/* Left Side */}
-        <NavItem to="/search" icon={Search} label="Explorer" />
-        <NavItem to="/" icon={MessageCircle} label="Messages" />
+        <NavItem to="/search" icon={Search} label={t('nav.explore')} />
+        <NavItem to="/" icon={MessageCircle} label={t('nav.messages')} />
 
         {/* Middle Spacer for Pulse Button */}
         <div style={{ width: '60px' }}></div>
 
         {/* Right Side */}
-        <NavItem to="/calendar" icon={Calendar} label="Agenda" />
-        <NavItem to="/profile" icon={User} label="Profil" />
+        <NavItem to="/calendar" icon={Calendar} label={t('nav.agenda')} />
+        <NavItem to="/profile" icon={User} label={t('nav.profile')} />
       </div>
 
       {/* Floating Action Button (FAB) */}

@@ -1,25 +1,29 @@
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useEvents } from '../context/EventContext';
+import { getUserData } from '../context/VisitContext';
 import { ArrowLeft, MapPin, Clock, Share2, Heart, MessageCircle, Lock } from 'lucide-react';
 import PageTransition from './PageTransition';
 import BlurImage from './BlurImage';
 import { toast } from 'sonner';
 
-interface Participant {
-    id: number;
-    name: string;
-    score: number;
-    avatar: string;
-}
-
-// Mock Participants Data
-const MOCK_PARTICIPANTS: Participant[] = [
-    { id: 1, name: "Sophie M.", score: 4.9, avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop" },
-    { id: 2, name: "Lucas D.", score: 4.2, avatar: "https://images.unsplash.com/photo-1599566150163-29194dcaad36?w=150&h=150&fit=crop" },
-    { id: 3, name: "Emma W.", score: 5.0, avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&h=150&fit=crop" },
-    { id: 4, name: "Thomas R.", score: 4.8, avatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&h=150&fit=crop" }
-];
+// Génère les participants à partir de getUserData pour cohérence avec UserProfile
+const getParticipants = (eventId: number) => {
+    // Générer des IDs de participants basés sur l'eventId pour la diversité
+    const baseId = (eventId * 7) % 50;
+    const participantIds = [baseId, baseId + 1, baseId + 2, baseId + 3].map(id => id % 50);
+    
+    return participantIds.map(id => {
+        const userData = getUserData(id);
+        const score = 4.0 + ((id % 10) / 10); // Score entre 4.0 et 4.9
+        return {
+            id,
+            name: userData.name,
+            score: parseFloat(score.toFixed(1)),
+            avatar: userData.image
+        };
+    });
+};
 
 const EventDetail: React.FC = () => {
     const { id } = useParams<{ id: string }>();
@@ -27,6 +31,7 @@ const EventDetail: React.FC = () => {
     const { events, toggleRegistration } = useEvents();
     
     const event = events.find(e => e.id.toString() === id);
+    const participants = getParticipants(parseInt(id || '0'));
 
     if (!event) return <div className="p-4">Événement non trouvé</div>;
 
@@ -212,8 +217,12 @@ const EventDetail: React.FC = () => {
                         </div>
 
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                            {MOCK_PARTICIPANTS.map(p => (
-                                <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                            {participants.map(p => (
+                                <div 
+                                    key={p.id} 
+                                    onClick={() => navigate(`/user/${p.id}`)}
+                                    style={{ display: 'flex', alignItems: 'center', gap: '16px', cursor: 'pointer' }}
+                                >
                                     <div style={{ width: '48px', height: '48px', borderRadius: '50%', overflow: 'hidden', border: '1px solid var(--color-border)' }}>
                                         <BlurImage
                                             src={p.avatar}

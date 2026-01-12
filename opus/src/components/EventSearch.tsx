@@ -1,19 +1,29 @@
 import React, { useState } from 'react';
 import { Search, Bell, SlidersHorizontal, MapPin, Crown } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useEvents } from '../context/EventContext';
 import { useFeatureFlags } from '../context/FeatureFlagContext';
 import PageTransition from './PageTransition';
 import BlurImage from './BlurImage';
 import './SearchInput.css';
 
-const CATEGORIES = ["Tout", "Sorties", "Musée", "Sport", "Rando", "Danse", "Verre"];
-
 const EventSearch: React.FC = () => {
     const navigate = useNavigate();
+    const { t, i18n } = useTranslation();
     const { events } = useEvents();
     const { isRestricted } = useFeatureFlags();
-    const [selectedCategory, setSelectedCategory] = useState<string>("Tout");
+    const [selectedCategory, setSelectedCategory] = useState<string>("all");
+    
+    const CATEGORIES = [
+        { key: "all", label: t('search.allCategories') },
+        { key: "outings", label: i18n.language === 'fr' ? "Sorties" : "Outings" },
+        { key: "museum", label: i18n.language === 'fr' ? "Musée" : "Museum" },
+        { key: "sport", label: "Sport" },
+        { key: "hiking", label: i18n.language === 'fr' ? "Rando" : "Hiking" },
+        { key: "dance", label: i18n.language === 'fr' ? "Danse" : "Dance" },
+        { key: "drinks", label: i18n.language === 'fr' ? "Verre" : "Drinks" }
+    ];
     
     const searchDisabled = isRestricted('disableSearch');
 
@@ -83,7 +93,7 @@ const EventSearch: React.FC = () => {
                             </div>
                             <input
                                 type="text"
-                                placeholder={searchDisabled ? "Recherche Premium" : "Rechercher un événement..."}
+                                placeholder={searchDisabled ? t('social.premium') : t('search.placeholder')}
                                 disabled={searchDisabled}
                                 style={{
                                     border: 'none',
@@ -136,7 +146,7 @@ const EventSearch: React.FC = () => {
                 {/* 2. Trending Carousel */}
                 <div style={{ padding: '0 0 24px 24px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', paddingRight: '24px', marginBottom: '16px' }}>
-                        <h2 style={{ fontSize: '18px', fontWeight: '800', color: 'var(--color-text)' }}>Tendance cette semaine 🔥</h2>
+                        <h2 style={{ fontSize: '18px', fontWeight: '800', color: 'var(--color-text)' }}>{t('search.trending')} 🔥</h2>
                     </div>
 
                     <div style={{
@@ -187,7 +197,7 @@ const EventSearch: React.FC = () => {
                                                     fontSize: '12px',
                                                     filter: shouldHide ? 'blur(4px)' : 'none'
                                                 }}>
-                                                    {shouldHide ? 'Inscrivez-vous' : event.location.split(',')[0]}
+                                                    {shouldHide ? t('events.locationHidden') : event.location.split(',')[0]}
                                                 </span>
                                             );
                                         })()}
@@ -207,11 +217,11 @@ const EventSearch: React.FC = () => {
                     msOverflowStyle: 'none'
                 }}>
                     {CATEGORIES.map(cat => {
-                        const isSelected = selectedCategory === cat;
+                        const isSelected = selectedCategory === cat.key;
                         return (
                             <button
-                                key={cat}
-                                onClick={() => setSelectedCategory(cat)}
+                                key={cat.key}
+                                onClick={() => setSelectedCategory(cat.key)}
                                 style={{
                                     padding: '10px 24px',
                                     borderRadius: '30px',
@@ -226,7 +236,7 @@ const EventSearch: React.FC = () => {
                                     cursor: 'pointer'
                                 }}
                             >
-                                {cat}
+                                {cat.label}
                             </button>
                         );
                     })}
@@ -289,13 +299,13 @@ const EventSearch: React.FC = () => {
                                                         color: 'var(--color-text-muted)',
                                                         filter: shouldHide ? 'blur(4px)' : 'none'
                                                     }}>
-                                                        {shouldHide ? 'Inscrivez-vous' : event.location.split(',')[0]}
+                                                        {shouldHide ? t('events.locationHidden') : event.location.split(',')[0]}
                                                     </span>
                                                 );
                                             })()}
                                         </div>
                                         <div style={{ fontSize: '12px', fontWeight: '800', color: '#f97316' }}>
-                                            {event.date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
+                                            {event.date.toLocaleDateString(i18n.language === 'fr' ? 'fr-FR' : 'en-US', { day: 'numeric', month: 'short' })}
                                         </div>
                                     </div>
                                 </div>

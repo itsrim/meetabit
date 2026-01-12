@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Award, ShieldCheck, Heart, Calendar, MessageCircle } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import PageTransition from './PageTransition';
 import BlurImage from './BlurImage';
 import { useVisits, getUserData, CURRENT_USER_ID } from '../context/VisitContext';
@@ -46,6 +47,7 @@ const getFullUserData = (userId: number) => {
 const UserProfile: React.FC = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
+    const { t } = useTranslation();
     const { recordVisit } = useVisits();
     const userId = parseInt(id || '0');
     const user = getFullUserData(userId);
@@ -56,11 +58,16 @@ const UserProfile: React.FC = () => {
 
     return (
         <PageTransition>
-            <div className="p-4 pb-24">
-                {/* Header simple comme CreateEvent */}
-                <div className="flex items-center gap-4 mb-6">
-                    <button onClick={() => navigate(-1)}><ArrowLeft size={24} /></button>
-                    <h1 className="font-bold text-xl">Profil</h1>
+            <div style={{ padding: '16px', paddingBottom: '96px' }}>
+                {/* Header */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '24px' }}>
+                    <button 
+                        onClick={() => navigate(-1)}
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text)' }}
+                    >
+                        <ArrowLeft size={24} />
+                    </button>
+                    <h1 style={{ fontWeight: '700', fontSize: '20px', color: 'var(--color-text)' }}>{t('profile.title')}</h1>
                 </div>
 
                 {/* Photo et infos */}
@@ -95,7 +102,7 @@ const UserProfile: React.FC = () => {
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                             <ShieldCheck size={16} color="#22c55e" />
                             <span style={{ color: 'rgba(255,255,255,0.9)', fontSize: '14px' }}>
-                                Profil vérifié
+                                {t('profile.verified')}
                             </span>
                         </div>
                     </div>
@@ -117,7 +124,7 @@ const UserProfile: React.FC = () => {
                         fontSize: '12px'
                     }}>
                         <Calendar size={12} />
-                        Membre depuis {user.memberSince}
+                        {t('profile.memberSince', { year: user.memberSince })}
                     </div>
                 </div>
 
@@ -127,19 +134,19 @@ const UserProfile: React.FC = () => {
                         <div style={{ fontSize: '24px', fontWeight: '800', color: 'var(--color-primary)' }}>
                             {user.reliability.toFixed(1)}
                         </div>
-                        <div style={{ fontSize: '11px', color: 'var(--color-text-muted)' }}>Fiabilité</div>
+                        <div style={{ fontSize: '11px', color: 'var(--color-text-muted)' }}>{t('profile.reliability')}</div>
                     </div>
                     <div className="card" style={{ flex: 1, padding: '16px', textAlign: 'center' }}>
                         <div style={{ fontSize: '24px', fontWeight: '800', color: 'var(--color-primary)' }}>
                             {user.events}
                         </div>
-                        <div style={{ fontSize: '11px', color: 'var(--color-text-muted)' }}>Événements</div>
+                        <div style={{ fontSize: '11px', color: 'var(--color-text-muted)' }}>{t('profile.events')}</div>
                     </div>
                     <div className="card" style={{ flex: 1, padding: '16px', textAlign: 'center' }}>
                         <div style={{ fontSize: '24px', fontWeight: '800', color: 'var(--color-primary)' }}>
                             {user.friends}
                         </div>
-                        <div style={{ fontSize: '11px', color: 'var(--color-text-muted)' }}>Amis</div>
+                        <div style={{ fontSize: '11px', color: 'var(--color-text-muted)' }}>{t('profile.friends')}</div>
                     </div>
                 </div>
 
@@ -150,7 +157,7 @@ const UserProfile: React.FC = () => {
                     color: 'var(--color-text)',
                     marginBottom: '12px'
                 }}>
-                    Badges
+                    {t('profile.badges')}
                 </h3>
                 <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '24px' }}>
                     {user.badges.map((badge, i) => (
@@ -189,7 +196,7 @@ const UserProfile: React.FC = () => {
                         }}
                     >
                         <MessageCircle size={18} />
-                        Message
+                        {t('profile.message')}
                     </button>
                     <button style={{
                         flex: 1,
@@ -207,7 +214,7 @@ const UserProfile: React.FC = () => {
                         gap: '8px'
                     }}>
                         <Heart size={18} />
-                        Ajouter
+                        {t('profile.addFriend')}
                     </button>
                 </div>
             </div>

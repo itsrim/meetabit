@@ -3,62 +3,62 @@ import { Config, ConfigKey, ConfigItemWithKey, Limits, FeatureFlagContextType } 
 
 const FeatureFlagContext = createContext<FeatureFlagContextType | undefined>(undefined);
 
-// Configuration Premium vs Free
+// Configuration Premium vs Free - using translation keys
 const DEFAULT_CONFIG: Config = {
     isPremium: {
         value: false,
-        label: '✨ Mode Premium',
-        description: 'Débloquer toutes les fonctionnalités',
+        label: 'restrictions.premiumMode',
+        description: 'restrictions.premiumModeDesc',
         category: 'Compte',
         isToggle: true
     },
     // Restrictions Free (inversées - true = restriction active)
     blurProfiles: {
         value: true,
-        label: 'Profils floutés',
-        description: 'Photos, noms et âges des utilisateurs floutés',
+        label: 'restrictions.blurProfiles',
+        description: 'restrictions.blurProfilesDesc',
         category: 'Restrictions Free',
         freeOnly: true
     },
     disableMessages: {
         value: true,
-        label: 'Messages désactivés',
-        description: 'Onglet Messages non accessible',
+        label: 'restrictions.disableMessages',
+        description: 'restrictions.disableMessagesDesc',
         category: 'Restrictions Free',
         freeOnly: true
     },
     blurEventAddress: {
         value: false,
-        label: 'Adresses floutées (obsolète)',
-        description: 'Géré par l\'organisateur de chaque événement',
+        label: 'restrictions.blurEventAddress',
+        description: 'restrictions.blurEventAddressDesc',
         category: 'Restrictions Free',
         freeOnly: true
     },
     limitEventCreation: {
         value: true,
-        label: 'Création limitée (1 événement)',
-        description: 'Maximum 1 événement actif à la fois',
+        label: 'restrictions.limitEventCreation',
+        description: 'restrictions.limitEventCreationDesc',
         category: 'Restrictions Free',
         freeOnly: true
     },
     limitParticipants: {
         value: true,
-        label: 'Participants limités (8 max)',
-        description: 'Premium: jusqu\'à 20 participants',
+        label: 'restrictions.limitParticipants',
+        description: 'restrictions.limitParticipantsDesc',
         category: 'Restrictions Free',
         freeOnly: true
     },
     limitRegistrations: {
         value: true,
-        label: 'Inscriptions limitées (3 max)',
-        description: 'Max 3 participations et 3 favoris. Premium: 10',
+        label: 'restrictions.limitRegistrations',
+        description: 'restrictions.limitRegistrationsDesc',
         category: 'Restrictions Free',
         freeOnly: true
     },
     disableSearch: {
         value: true,
-        label: 'Recherche désactivée',
-        description: 'La recherche d\'événements est réservée aux Premium',
+        label: 'restrictions.disableSearch',
+        description: 'restrictions.disableSearchDesc',
         category: 'Restrictions Free',
         freeOnly: true
     }

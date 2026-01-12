@@ -2,6 +2,7 @@ import React, { useState, CSSProperties } from 'react';
 import { Virtuoso } from 'react-virtuoso';
 import { Heart, Search, Lock, Crown, Eye } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import PageTransition from './PageTransition';
 import BlurImage from './BlurImage';
 import { useFeatureFlags } from '../context/FeatureFlagContext';
@@ -66,6 +67,7 @@ type TabType = 'suggestions' | 'messages' | 'visitors';
 
 const SocialPage: React.FC = () => {
     const navigate = useNavigate();
+    const { t, i18n } = useTranslation();
     const [activeTab, setActiveTab] = useState<TabType>('suggestions');
     const { isRestricted, isPremium } = useFeatureFlags();
     const { getMyVisitors } = useVisits();
@@ -85,12 +87,12 @@ const SocialPage: React.FC = () => {
         const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
         const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
-        if (diffMins < 1) return "À l'instant";
-        if (diffMins < 60) return `${diffMins} min`;
-        if (diffHours < 24) return `${diffHours}h`;
-        if (diffDays === 1) return 'Hier';
-        if (diffDays < 7) return `${diffDays}j`;
-        return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
+        if (diffMins < 1) return t('time.now');
+        if (diffMins < 60) return t('time.minutesAgo', { count: diffMins });
+        if (diffHours < 24) return t('time.hoursAgo', { count: diffHours });
+        if (diffDays === 1) return t('time.yesterday');
+        if (diffDays < 7) return t('time.daysAgo', { count: diffDays });
+        return date.toLocaleDateString(i18n.language === 'fr' ? 'fr-FR' : 'en-US', { day: 'numeric', month: 'short' });
     };
     
     const blurProfiles = isRestricted('blurProfiles');
@@ -220,7 +222,7 @@ const SocialPage: React.FC = () => {
                     marginBottom: '0'
                 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-                        <h1 style={{ fontSize: '22px', fontWeight: '800', color: '#111827' }}>Amitié</h1>
+                        <h1 style={{ fontSize: '22px', fontWeight: '800', color: '#111827' }}>{t('social.title')}</h1>
                         <button 
                             disabled={searchDisabled}
                             style={{
@@ -323,7 +325,7 @@ const SocialPage: React.FC = () => {
                                 cursor: 'pointer'
                             }}
                         >
-                            Suggestions
+                            {t('social.suggestions')}
                         </button>
                         <button
                             onClick={() => !disableMessages && setActiveTab('messages')}
@@ -339,7 +341,7 @@ const SocialPage: React.FC = () => {
                                 opacity: disableMessages ? 0.5 : 1
                             }}
                         >
-                            Messages
+                            {t('social.messages')}
                             {!disableMessages && totalUnread > 0 && (
                                 <span style={{
                                     background: '#ef4444', color: 'white',
@@ -377,7 +379,7 @@ const SocialPage: React.FC = () => {
                             }}
                         >
                             <Eye size={14} />
-                            Visites
+                            {t('social.visitors')}
                             {isPremium && (
                                 <span style={{
                                     background: '#fbbf24', color: 'white',
@@ -424,8 +426,8 @@ const SocialPage: React.FC = () => {
                                         color: 'var(--color-text-muted)',
                                         textAlign: 'center'
                                     }}>
-                                        <p style={{ fontSize: '14px' }}>Pas encore de messages.</p>
-                                        <p style={{ fontSize: '12px', marginTop: '8px' }}>Visitez des profils pour commencer à discuter !</p>
+                                        <p style={{ fontSize: '14px' }}>{t('social.noMessages')}</p>
+                                        <p style={{ fontSize: '12px', marginTop: '8px' }}>{t('social.startConversation')}</p>
                                     </div>
                                 ) : (
                                     conversations.map(conv => (
@@ -500,10 +502,10 @@ const SocialPage: React.FC = () => {
                                     <Crown size={24} color="#111827" />
                                     <div>
                                         <div style={{ color: 'white', fontWeight: '700', fontSize: '14px' }}>
-                                            Fonctionnalité Premium
+                                            {t('social.premiumFeature')}
                                         </div>
                                         <div style={{ color: 'rgba(255,255,255,0.8)', fontSize: '12px' }}>
-                                            {visitors.length} personnes ont visité votre profil
+                                            {t('social.visitedProfile', { count: visitors.length })}
                                         </div>
                                     </div>
                                 </div>
@@ -562,7 +564,7 @@ const SocialPage: React.FC = () => {
                                             cursor: 'pointer'
                                         }}>
                                             <Heart size={12} style={{ marginRight: '4px', display: 'inline' }} />
-                                            Like
+                                            {t('social.like')}
                                         </button>
                                     </div>
                                 ))}

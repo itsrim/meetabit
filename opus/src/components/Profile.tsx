@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Award, ShieldCheck, Heart, CalendarDays, History, Users, Settings, RotateCcw, Crown, Lock } from 'lucide-react';
+import { Award, ShieldCheck, Heart, CalendarDays, History, Users, Settings, RotateCcw, Crown, Lock, Globe } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import PageTransition from './PageTransition';
 import BlurImage from './BlurImage';
 import { useEvents } from '../context/EventContext';
@@ -26,9 +27,15 @@ const FRIENDS: Friend[] = [
 type TabType = 'upcoming' | 'favorites' | 'friends' | 'past' | 'settings';
 
 const Profile: React.FC = () => {
+    const { t, i18n } = useTranslation();
     const { events, getFavoriteEvents } = useEvents();
     const { getConfigByCategory, toggleConfig, resetConfig, isPremium, getLimits } = useFeatureFlags();
     const [activeTab, setActiveTab] = useState<TabType>('upcoming');
+    
+    const currentLanguage = i18n.language;
+    const toggleLanguage = () => {
+        i18n.changeLanguage(currentLanguage === 'fr' ? 'en' : 'fr');
+    };
     
     const today = new Date();
     const limits = getLimits();
@@ -75,18 +82,18 @@ const Profile: React.FC = () => {
                         </div>
                     </div>
                     <h2 className="font-bold text-lg">Thomas R.</h2>
-                    <span className="text-muted text-sm">Membre depuis 2024</span>
+                    <span className="text-muted text-sm">{t('profile.memberSince', { year: '2024' })}</span>
                 </div>
 
                 {/* Stats Cards */}
                 <div style={{ display: 'flex', gap: '12px', marginBottom: '24px' }}>
                     <div className="card p-3" style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
                         <span className="text-primary font-bold" style={{ fontSize: '24px' }}>4.9</span>
-                        <span className="text-muted text-xs">Fiabilité</span>
+                        <span className="text-muted text-xs">{t('profile.reliability')}</span>
                     </div>
                     <div className="card p-3" style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
                         <span className="text-primary font-bold" style={{ fontSize: '24px' }}>{myEvents.length}</span>
-                        <span className="text-muted text-xs">Événements</span>
+                        <span className="text-muted text-xs">{t('profile.events')}</span>
                     </div>
                     <div className="card p-3" style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
                         <span style={{ fontSize: '24px', color: '#10b981', fontWeight: 'bold' }}>0</span>
@@ -94,10 +101,21 @@ const Profile: React.FC = () => {
                     </div>
                 </div>
 
+                {/* Badges */}
+                <h3 className="font-bold mb-2">{t('profile.badges')}</h3>
+                <div style={{ display: 'flex', gap: '12px', overflowX: 'auto', paddingBottom: '8px', marginBottom: '16px' }}>
+                    {[t('badges.punctual'), t('badges.organizer'), t('badges.friendly'), t('badges.explorer')].map((badge, i) => (
+                        <div key={i} className="card" style={{ padding: '8px 12px', display: 'flex', alignItems: 'center', gap: '8px', minWidth: 'max-content' }}>
+                            <Award size={16} style={{ color: '#eab308' }} />
+                            <span className="text-sm font-bold">{badge}</span>
+                        </div>
+                    ))}
+                </div>
+
                 {/* Reliability Section */}
-                <div className="card p-4" style={{ marginBottom: '24px' }}>
+                {/* <div className="card p-4" style={{ marginBottom: '24px' }}>
                     <div className="flex justify-between items-center mb-2">
-                        <h3 className="font-bold">Indicateur de Sérieux</h3>
+                        <h3 className="font-bold">{t('settings.reliabilityIndicator')}</h3>
                         <span style={{
                             fontSize: '12px',
                             fontWeight: 'bold',
@@ -105,27 +123,16 @@ const Profile: React.FC = () => {
                             background: '#dcfce7',
                             color: '#15803d',
                             borderRadius: '999px'
-                        }}>Exemplaire</span>
+                        }}>{t('settings.exemplary')}</span>
                     </div>
 
                     <div style={{ width: '100%', background: '#e4e4e7', borderRadius: '10px', height: '10px', marginBottom: '8px' }}>
                         <div style={{ width: '95%', background: 'var(--color-primary)', height: '100%', borderRadius: '10px' }}></div>
                     </div>
                     <p className="text-sm text-muted">
-                        Thomas est un participant très fiable. Il confirme sa présence et arrive à l'heure.
+                        {t('settings.reliabilityDesc')}
                     </p>
-                </div>
-
-                {/* Badges */}
-                <h3 className="font-bold mb-2">Badges</h3>
-                <div style={{ display: 'flex', gap: '12px', overflowX: 'auto', paddingBottom: '8px', marginBottom: '24px' }}>
-                    {['Ponctuel', 'Organisateur', 'Amical', 'Explorateur'].map((badge, i) => (
-                        <div key={i} className="card" style={{ padding: '8px 12px', display: 'flex', alignItems: 'center', gap: '8px', minWidth: 'max-content' }}>
-                            <Award size={16} style={{ color: '#eab308' }} />
-                            <span className="text-sm font-bold">{badge}</span>
-                        </div>
-                    ))}
-                </div>
+                </div> */}
 
                 {/* Tabs - Underline style */}
                 <div style={{ 
@@ -155,7 +162,7 @@ const Profile: React.FC = () => {
                         }}
                     >
                         <CalendarDays size={14} />
-                        À venir
+                        {t('settings.upcoming')}
                         <span style={{
                             background: 'var(--color-primary)',
                             color: 'white',
@@ -184,7 +191,7 @@ const Profile: React.FC = () => {
                         }}
                     >
                         <Heart size={14} />
-                        Favoris
+                        {t('settings.favorites')}
                         <span style={{
                             background: '#ec4899',
                             color: 'white',
@@ -213,7 +220,7 @@ const Profile: React.FC = () => {
                         }}
                     >
                         <Users size={14} />
-                        Amis
+                        {t('profile.friends')}
                         <span style={{
                             background: '#8b5cf6',
                             color: 'white',
@@ -244,7 +251,7 @@ const Profile: React.FC = () => {
                     >
                         {!isPremium && <Lock size={12} color="#fbbf24" />}
                         <History size={14} />
-                        Passés
+                        {t('settings.past')}
                         {isPremium ? (
                             <span style={{
                                 background: '#6b7280',
@@ -284,7 +291,7 @@ const Profile: React.FC = () => {
                         }}
                     >
                         <Settings size={14} />
-                        Paramètres
+                        {t('profile.settings')}
                     </button>
                 </div>
 
@@ -300,12 +307,12 @@ const Profile: React.FC = () => {
                             <div style={{ flex: 1 }}>
                                 <div className="font-bold text-sm" style={{ marginBottom: '2px' }}>{event.title}</div>
                                     <div className="text-xs text-muted" style={{ display: 'flex', alignItems: 'center', gap: '4px', flexWrap: 'wrap' }}>
-                                    <span>{event.date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}</span>
+                                    <span>{event.date.toLocaleDateString(i18n.language === 'fr' ? 'fr-FR' : 'en-US', { day: 'numeric', month: 'short' })}</span>
                                     <span>•</span>
                                     <span>{event.time}</span>
                                     <span>•</span>
                                     <span style={{ color: event.isOrganizer ? 'var(--color-primary)' : 'var(--color-success)' }}>
-                                        {event.isOrganizer ? 'Organisateur' : 'Inscrit'}
+                                        {event.isOrganizer ? t('events.organizer') : t('settings.registered')}
                                     </span>
                                 </div>
                             </div>
@@ -313,7 +320,7 @@ const Profile: React.FC = () => {
                     )) : (
                         <div className="card p-4 text-center text-muted text-sm">
                                 <CalendarDays size={24} style={{ margin: '0 auto 8px', opacity: 0.3 }} />
-                            Aucun événement à venir.
+                            {t('settings.noUpcomingEvents')}
                             </div>
                         )
                     )}
@@ -328,18 +335,18 @@ const Profile: React.FC = () => {
                                 <div style={{ flex: 1 }}>
                                     <div className="font-bold text-sm" style={{ marginBottom: '2px' }}>{event.title}</div>
                                     <div className="text-xs text-muted" style={{ display: 'flex', alignItems: 'center', gap: '4px', flexWrap: 'wrap' }}>
-                                        <span>{event.date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}</span>
+                                        <span>{event.date.toLocaleDateString(i18n.language === 'fr' ? 'fr-FR' : 'en-US', { day: 'numeric', month: 'short' })}</span>
                                         <span>•</span>
                                         <span>{event.time}</span>
                                         <span>•</span>
-                                        <span style={{ color: '#10b981' }}>✓ Participé</span>
+                                        <span style={{ color: '#10b981' }}>✓ {t('settings.participated')}</span>
                                     </div>
                                 </div>
                             </div>
                         )) : (
                             <div className="card p-4 text-center text-muted text-sm">
                                 <History size={24} style={{ margin: '0 auto 8px', opacity: 0.3 }} />
-                                Aucun événement passé.
+                                {t('settings.noPastEvents')}
                             </div>
                         )
                     )}
@@ -362,7 +369,7 @@ const Profile: React.FC = () => {
                                 <div style={{ flex: 1 }}>
                                     <div className="font-bold text-sm" style={{ marginBottom: '2px' }}>{event.title}</div>
                                     <div className="text-xs text-muted" style={{ display: 'flex', alignItems: 'center', gap: '4px', flexWrap: 'wrap' }}>
-                                        <span>{event.date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}</span>
+                                        <span>{event.date.toLocaleDateString(i18n.language === 'fr' ? 'fr-FR' : 'en-US', { day: 'numeric', month: 'short' })}</span>
                                         <span>•</span>
                                         <span>{event.time}</span>
                                     </div>
@@ -371,7 +378,7 @@ const Profile: React.FC = () => {
                         )) : (
                             <div className="card p-4 text-center text-muted text-sm">
                                 <Heart size={24} style={{ margin: '0 auto 8px', opacity: 0.3 }} />
-                                Aucun événement en favoris.
+                                {t('settings.noFavorites')}
                             </div>
                         )
                     )}
@@ -386,7 +393,7 @@ const Profile: React.FC = () => {
                                 <div style={{ flex: 1 }}>
                                     <div className="font-bold text-sm" style={{ marginBottom: '2px' }}>{friend.name}</div>
                                     <div className="text-xs text-muted">
-                                        {friend.events} événements en commun
+                                        {friend.events} {t('settings.commonEvents')}
                                     </div>
                                 </div>
                                 <button style={{
@@ -398,8 +405,8 @@ const Profile: React.FC = () => {
                                     fontSize: '12px',
                                     fontWeight: '600',
                                     cursor: 'pointer'
-                                }}>
-                                    Voir
+                                }}                                >
+                                    {t('settings.view')}
                                 </button>
                             </div>
                         ))
@@ -443,13 +450,13 @@ const Profile: React.FC = () => {
                                                 color: isPremium ? 'white' : 'var(--color-text)',
                                                 marginBottom: '2px'
                                             }}>
-                                                {isPremium ? 'Premium Activé' : 'Mode Gratuit'}
+                                                {isPremium ? t('settings.premiumActive') : t('settings.premiumInactive')}
                                             </div>
                                             <div style={{ 
                                                 fontSize: '12px', 
                                                 color: isPremium ? 'rgba(255,255,255,0.8)' : 'var(--color-text-muted)'
                                             }}>
-                                                {isPremium ? 'Toutes les fonctionnalités débloquées' : 'Fonctionnalités limitées'}
+                                                {isPremium ? t('settings.allFeaturesUnlocked') : t('settings.limitedFeatures')}
                                             </div>
                                         </div>
                                     </div>
@@ -476,6 +483,74 @@ const Profile: React.FC = () => {
                                 </div>
                             </div>
 
+                            {/* Sélecteur de langue */}
+                            <div 
+                                className="card" 
+                                onClick={toggleLanguage}
+                                style={{ 
+                                    overflow: 'hidden', 
+                                    cursor: 'pointer'
+                                }}
+                            >
+                                <div style={{
+                                    padding: '16px',
+                                    display: 'flex',
+                                    justifyContent: 'space-between',
+                                    alignItems: 'center'
+                                }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                        <div style={{
+                                            width: '44px',
+                                            height: '44px',
+                                            borderRadius: '12px',
+                                            background: '#e0f2fe',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center'
+                                        }}>
+                                            <Globe size={24} color="#0284c7" />
+                                        </div>
+                                        <div>
+                                            <div style={{ 
+                                                fontSize: '15px', 
+                                                fontWeight: '700', 
+                                                color: 'var(--color-text)',
+                                                marginBottom: '2px'
+                                            }}>
+                                                {t('settings.language')}
+                                            </div>
+                                            <div style={{ 
+                                                fontSize: '12px', 
+                                                color: 'var(--color-text-muted)'
+                                            }}>
+                                                {currentLanguage === 'fr' ? t('settings.french') : t('settings.english')}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div style={{
+                                        display: 'flex',
+                                        gap: '8px'
+                                    }}>
+                                        <span style={{
+                                            padding: '6px 12px',
+                                            borderRadius: '8px',
+                                            fontSize: '13px',
+                                            fontWeight: '600',
+                                            background: currentLanguage === 'fr' ? '#0284c7' : 'var(--color-border)',
+                                            color: currentLanguage === 'fr' ? 'white' : 'var(--color-text-muted)'
+                                        }}>FR</span>
+                                        <span style={{
+                                            padding: '6px 12px',
+                                            borderRadius: '8px',
+                                            fontSize: '13px',
+                                            fontWeight: '600',
+                                            background: currentLanguage === 'en' ? '#0284c7' : 'var(--color-border)',
+                                            color: currentLanguage === 'en' ? 'white' : 'var(--color-text-muted)'
+                                        }}>EN</span>
+                                    </div>
+                                </div>
+                            </div>
+
                             {/* Limites actuelles */}
                             <div className="card" style={{ overflow: 'hidden' }}>
                                 <div style={{
@@ -488,23 +563,23 @@ const Profile: React.FC = () => {
                                     textTransform: 'uppercase',
                                     letterSpacing: '0.5px'
                                 }}>
-                                    Vos limites actuelles
+                                    {t('profile.settings')}
                                 </div>
                                 <div style={{ padding: '12px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
                                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}>
-                                        <span style={{ color: 'var(--color-text-muted)' }}>Participants max par événement</span>
+                                        <span style={{ color: 'var(--color-text-muted)' }}>{t('settings.maxParticipants')}</span>
                                         <span style={{ fontWeight: '600', color: 'var(--color-text)' }}>{limits.maxParticipants}</span>
                                     </div>
                                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}>
-                                        <span style={{ color: 'var(--color-text-muted)' }}>Inscriptions max</span>
+                                        <span style={{ color: 'var(--color-text-muted)' }}>{t('settings.maxRegistrations')}</span>
                                         <span style={{ fontWeight: '600', color: 'var(--color-text)' }}>{limits.maxRegistrations}</span>
                                     </div>
                                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}>
-                                        <span style={{ color: 'var(--color-text-muted)' }}>Favoris max</span>
+                                        <span style={{ color: 'var(--color-text-muted)' }}>{t('settings.maxFavorites')}</span>
                                         <span style={{ fontWeight: '600', color: 'var(--color-text)' }}>{limits.maxFavorites}</span>
                                     </div>
                                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}>
-                                        <span style={{ color: 'var(--color-text-muted)' }}>Événements actifs max</span>
+                                        <span style={{ color: 'var(--color-text-muted)' }}>{t('settings.maxActiveEvents')}</span>
                                         <span style={{ fontWeight: '600', color: 'var(--color-text)' }}>{limits.maxActiveEvents === 999 ? '∞' : limits.maxActiveEvents}</span>
                                     </div>
                                 </div>
@@ -526,7 +601,7 @@ const Profile: React.FC = () => {
                                     gap: '6px'
                                 }}>
                                     {!isPremium && <Lock size={12} />}
-                                    {isPremium ? 'Contrôle des restrictions' : 'Restrictions Mode Gratuit'}
+                                    {isPremium ? t('settings.restrictionsControl') : t('settings.restrictionsFree')}
                                 </div>
                                 {(configByCategory['Restrictions Free'] || []).map((item: ConfigItemWithKey, index: number, arr: ConfigItemWithKey[]) => (
                                     <div
@@ -546,10 +621,10 @@ const Profile: React.FC = () => {
                                         <div style={{ flex: 1 }}>
                                             <div style={{ fontSize: '13px', fontWeight: '600', color: isPremium ? 'var(--color-text)' : 'var(--color-text-muted)', marginBottom: '2px', display: 'flex', alignItems: 'center', gap: '6px' }}>
                                                 {!isPremium && <Lock size={12} color="#9ca3af" />}
-                                                {item.label}
+                                                {t(item.label)}
                                             </div>
                                             <div style={{ fontSize: '11px', color: 'var(--color-text-muted)' }}>
-                                                {item.description}
+                                                {t(item.description)}
                                             </div>
                                         </div>
                                         <div style={{
@@ -598,7 +673,7 @@ const Profile: React.FC = () => {
                                 }}
                             >
                                 <RotateCcw size={14} />
-                                Réinitialiser les paramètres
+                                {t('settings.resetSettings')}
                             </button>
 
                             {/* Info */}
@@ -608,7 +683,7 @@ const Profile: React.FC = () => {
                                 textAlign: 'center',
                                 padding: '8px'
                             }}>
-                                Les changements sont sauvegardés automatiquement
+                                {t('settings.autoSaved')}
                             </div>
                         </div>
                     )}

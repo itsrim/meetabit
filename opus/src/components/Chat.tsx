@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Send } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import BlurImage from './BlurImage';
 import PageTransition from './PageTransition';
 import { useMessages } from '../context/MessageContext';
@@ -9,6 +10,7 @@ import { getUserData, CURRENT_USER_ID } from '../context/VisitContext';
 const Chat: React.FC = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
+    const { t, i18n } = useTranslation();
     const { getConversationMessages, sendMessage, markAsRead } = useMessages();
     const [newMessage, setNewMessage] = useState('');
     const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -40,7 +42,7 @@ const Chat: React.FC = () => {
     };
 
     const formatTime = (date: Date): string => {
-        return date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+        return date.toLocaleTimeString(i18n.language === 'fr' ? 'fr-FR' : 'en-US', { hour: '2-digit', minute: '2-digit' });
     };
 
     return (
@@ -51,12 +53,24 @@ const Chat: React.FC = () => {
                 flexDirection: 'column',
                 background: 'var(--color-background)'
             }}>
-                {/* Header simple comme CreateEvent */}
-                <div className="p-4 flex items-center gap-4" style={{ background: 'var(--color-surface)', borderBottom: '1px solid var(--color-border)' }}>
-                    <button onClick={() => navigate(-1)}><ArrowLeft size={24} /></button>
+                {/* Header */}
+                <div style={{ 
+                    padding: '16px', 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: '16px',
+                    background: 'var(--color-surface)', 
+                    borderBottom: '1px solid var(--color-border)' 
+                }}>
+                    <button 
+                        onClick={() => navigate(-1)}
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text)' }}
+                    >
+                        <ArrowLeft size={24} />
+                    </button>
                     <div 
                         onClick={() => navigate(`/user/${oderId}`)}
-                        className="flex items-center gap-3 flex-1 cursor-pointer"
+                        style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1, cursor: 'pointer' }}
                     >
                         <div style={{
                             width: '44px',
@@ -67,8 +81,10 @@ const Chat: React.FC = () => {
                             <BlurImage src={otherUser.image} alt={otherUser.name} />
                         </div>
                         <div>
-                            <h3 className="font-bold text-base">{otherUser.name}, {otherUser.age}</h3>
-                            <span style={{ fontSize: '12px', color: '#22c55e' }}>En ligne</span>
+                            <h3 style={{ fontWeight: '700', fontSize: '16px', color: 'var(--color-text)' }}>
+                                {otherUser.name}, {otherUser.age}
+                            </h3>
+                            <span style={{ fontSize: '12px', color: '#22c55e' }}>{t('social.online')}</span>
                         </div>
                     </div>
                 </div>
@@ -101,7 +117,7 @@ const Chat: React.FC = () => {
                                 <BlurImage src={otherUser.image} alt={otherUser.name} />
                             </div>
                             <p style={{ fontSize: '14px' }}>
-                                Commencez une conversation avec {otherUser.name} !
+                                {t('chat.startChat', { name: otherUser.name })}
                             </p>
                         </div>
                     ) : (
@@ -153,7 +169,7 @@ const Chat: React.FC = () => {
                         value={newMessage}
                         onChange={(e) => setNewMessage(e.target.value)}
                         onKeyPress={handleKeyPress}
-                        placeholder="Écrivez un message..."
+                        placeholder={t('chat.placeholder')}
                         style={{
                             flex: 1,
                             padding: '12px 16px',
