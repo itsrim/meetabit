@@ -63,8 +63,11 @@
     "blockNotifications": "Bloquer les notifications",
     "leaveGroup": "Sortir du groupe",
     "removeMember": "Retirer du groupe",
+    "addMember": "Ajouter un membre",
     "confirmLeave": "Êtes-vous sûr de vouloir quitter ce groupe ?",
-    "membersCount": "{{count}} membres"
+    "membersCount": "{{count}} membres",
+    "selectFriend": "Inviter un ami",
+    "noMoreFriends": "Tous vos amis sont déjà présents"
   },
   "events": {
     "title": "Événements",

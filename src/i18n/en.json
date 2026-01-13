@@ -63,8 +63,11 @@
     "blockNotifications": "Block notifications",
     "leaveGroup": "Leave group",
     "removeMember": "Remove from group",
+    "addMember": "Add a member",
     "confirmLeave": "Are you sure you want to leave this group?",
-    "membersCount": "{{count}} members"
+    "membersCount": "{{count}} members",
+    "selectFriend": "Invite a friend",
+    "noMoreFriends": "All your friends are already here"
   },
   "events": {
     "title": "Events",

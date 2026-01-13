@@ -47,6 +47,8 @@ interface MessageContextType {
     groups: SocialGroup[];
     leaveGroup: (groupId: number) => void;
     removeMember: (groupId: number, memberName: string) => void;
+    addMember: (groupId: number, memberName: string) => void;
+    createGroup: (name: string) => void;
 }
 
 const MessageContext = createContext<MessageContextType | undefined>(undefined);
@@ -82,6 +84,16 @@ export const MessageProvider: React.FC<{ children: ReactNode }> = ({ children })
 
     const leaveGroup = (groupId: number) => {
         setGroups(prev => prev.filter(g => g.id !== groupId));
+    };
+    const addMember = (groupId: number, memberName: string) => {
+        setGroups(prev => prev.map(g => {
+            if (g.id === groupId) {
+                // Éviter les doublons
+                if (g.members.includes(memberName)) return g;
+                return { ...g, members: [...g.members, memberName] };
+            }
+            return g;
+        }));
     };
 
     const removeMember = (groupId: number, memberName: string) => {
@@ -231,7 +243,9 @@ export const MessageProvider: React.FC<{ children: ReactNode }> = ({ children })
             updateChatSettings,
             groups,
             leaveGroup,
-            removeMember
+            removeMember,
+            addMember,
+            createGroup
         }}>
             {children}
         </MessageContext.Provider>

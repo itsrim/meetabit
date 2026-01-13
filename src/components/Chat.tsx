@@ -1,22 +1,24 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Send, Settings, Volume2, VolumeX, Bell, BellOff, UserMinus, LogOut, Trash2, User } from 'lucide-react';
+import { ArrowLeft, Send, Settings, Volume2, VolumeX, Bell, BellOff, UserMinus, LogOut, Trash2, User, UserPlus } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
 import BlurImage from './BlurImage';
 import PageTransition from './PageTransition';
 import { useMessages, SocialGroup } from '../context/MessageContext';
 import { getUserData, CURRENT_USER_ID, CURRENT_USER } from '../context/VisitContext';
-import { GroupAvatar } from './SocialPage';
+import { GroupAvatar } from './Social/GroupAvatar';
+import { SUGGESTIONS } from '../data/mockSuggestions';
 
 const Chat: React.FC = () => {
     const { id = '' } = useParams<{ id: string }>();
     const navigate = useNavigate();
     const { t, i18n } = useTranslation();
-    const { getConversationMessages, sendMessage, markAsRead, chatSettings, updateChatSettings, leaveGroup, removeMember, groups } = useMessages();
+    const { getConversationMessages, sendMessage, markAsRead, chatSettings, updateChatSettings, leaveGroup, removeMember, groups, addMember } = useMessages();
     const [newMessage, setNewMessage] = useState('');
     const [showSettings, setShowSettings] = useState(false);
     const [isConfirmingLeave, setIsConfirmingLeave] = useState(false);
+    const [showAddMember, setShowAddMember] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
     // Vérifier si c'est un groupe ou un utilisateur
@@ -224,11 +226,54 @@ const Chat: React.FC = () => {
                             {/* Group Management Section */}
                             {isGroup && groupData && (
                                 <>
-                                    <div style={{ padding: '8px 12px', borderTop: '1px solid var(--color-border)', marginTop: '8px', marginBottom: '4px' }}>
+                                    <div style={{ padding: '8px 12px', borderTop: '1px solid var(--color-border)', marginTop: '8px', marginBottom: '4px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                         <span style={{ fontSize: '12px', fontWeight: '700', color: 'var(--color-text-muted)', textTransform: 'uppercase' }}>
                                             Membres ({groupData.members.length})
                                         </span>
+                                        <button
+                                            onClick={() => setShowAddMember(!showAddMember)}
+                                            style={{ background: 'none', border: 'none', color: 'var(--color-primary)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px', fontWeight: '700' }}
+                                        >
+                                            <UserPlus size={14} />
+                                            {t('chat.addMember')}
+                                        </button>
                                     </div>
+
+                                    {showAddMember && (
+                                        <motion.div
+                                            initial={{ height: 0, opacity: 0 }}
+                                            animate={{ height: 'auto', opacity: 1 }}
+                                            style={{ overflow: 'hidden', padding: '0 8px', marginBottom: '8px', borderBottom: '1px solid var(--color-border)' }}
+                                        >
+                                            <div style={{ padding: '8px', background: 'rgba(0,0,0,0.03)', borderRadius: '12px' }}>
+                                                <p style={{ fontSize: '11px', color: 'var(--color-text-muted)', marginBottom: '8px', fontWeight: '600' }}>
+                                                    {t('chat.selectFriend')}
+                                                </p>
+                                                <div style={{ display: 'flex', gap: '10px', overflowX: 'auto', paddingBottom: '8px', scrollbarWidth: 'none' }}>
+                                                    {SUGGESTIONS.slice(0, 15)
+                                                        .filter(f => !groupData.members.includes(f.name))
+                                                        .map(friend => (
+                                                            <div
+                                                                key={friend.id}
+                                                                onClick={() => {
+                                                                    addMember(groupData.id, friend.name);
+                                                                    setShowAddMember(false);
+                                                                }}
+                                                                style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', cursor: 'pointer', width: '60px' }}
+                                                            >
+                                                                <div style={{ width: '40px', height: '40px', borderRadius: '50%', overflow: 'hidden' }}>
+                                                                    <BlurImage src={friend.image} alt={friend.name} />
+                                                                </div>
+                                                                <span style={{ fontSize: '10px', fontWeight: '600', color: 'var(--color-text)', textAlign: 'center', width: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                                                    {friend.name}
+                                                                </span>
+                                                            </div>
+                                                        ))
+                                                    }
+                                                </div>
+                                            </div>
+                                        </motion.div>
+                                    )}
                                     <div style={{
                                         maxHeight: '170px',
                                         overflowY: 'auto',
