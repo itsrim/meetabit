@@ -2,9 +2,10 @@ import React, { useState, FormEvent, ChangeEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useEvents } from '../context/EventContext';
 import { useFeatureFlags } from '../context/FeatureFlagContext';
-import { ArrowLeft, Image as ImageIcon, Users, Lock, MapPin, EyeOff } from 'lucide-react';
+import { ArrowLeft, Image as ImageIcon, Users, Lock, MapPin, EyeOff, UserCheck, Calendar, Clock, FileText, Sparkles } from 'lucide-react';
 import PageTransition from './PageTransition';
 import { toast } from 'sonner';
+import { motion } from 'framer-motion';
 
 interface FormData {
     title: string;
@@ -14,18 +15,18 @@ interface FormData {
     description: string;
     maxAttendees: number;
     hideAddressUntilRegistered: boolean;
+    requireManualApproval: boolean;
 }
 
 const CreateEvent: React.FC = () => {
     const navigate = useNavigate();
     const { addEvent, events } = useEvents();
-    const { isRestricted, getLimits, isPremium } = useFeatureFlags();
-    
+    const { isRestricted, getLimits } = useFeatureFlags();
+
     const limits = getLimits();
     const limitEventCreation = isRestricted('limitEventCreation');
     const limitParticipants = isRestricted('limitParticipants');
-    
-    // Vérifier si l'utilisateur a déjà un événement actif (organisateur)
+
     const today = new Date();
     const myActiveEvents = events.filter(e => e.isOrganizer && e.date >= today);
     const canCreateEvent = !limitEventCreation || myActiveEvents.length < limits.maxActiveEvents;
@@ -38,18 +39,18 @@ const CreateEvent: React.FC = () => {
         location: '',
         description: '',
         maxAttendees: Math.min(20, maxParticipantsAllowed),
-        hideAddressUntilRegistered: false
+        hideAddressUntilRegistered: false,
+        requireManualApproval: false
     });
 
     const handleSubmit = (e: FormEvent<HTMLFormElement>): void => {
         e.preventDefault();
-        
+
         if (!canCreateEvent) {
             toast.error("Limite atteinte ! Passez en Premium pour créer plus d'événements.");
             return;
         }
-        
-        // Create new event object
+
         const newEvent = {
             title: formData.title,
             date: new Date(formData.date),
@@ -65,22 +66,152 @@ const CreateEvent: React.FC = () => {
         navigate('/');
     };
 
+    // Toggle component réutilisable
+    const ToggleOption = ({
+        icon: Icon,
+        iconActive: IconActive,
+        title,
+        description,
+        descriptionActive,
+        isActive,
+        onToggle,
+        color = '#3b82f6'
+    }: {
+        icon: React.ElementType;
+        iconActive?: React.ElementType;
+        title: string;
+        description: string;
+        descriptionActive?: string;
+        isActive: boolean;
+        onToggle: () => void;
+        color?: string;
+    }) => (
+        <motion.div
+            onClick={onToggle}
+            whileTap={{ scale: 0.98 }}
+            style={{
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: '12px',
+                padding: '16px',
+                background: isActive ? `${color}10` : 'var(--color-surface)',
+                borderRadius: '16px',
+                border: `1px solid ${isActive ? color : 'var(--color-border)'}`,
+                transition: 'all 0.2s'
+            }}
+        >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                <div style={{
+                    width: '44px',
+                    height: '44px',
+                    borderRadius: '12px',
+                    background: isActive ? color : 'rgba(0,0,0,0.05)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    transition: 'all 0.2s'
+                }}>
+                    {isActive && IconActive ? (
+                        <IconActive size={22} color="white" />
+                    ) : (
+                        <Icon size={22} color={isActive ? 'white' : '#9ca3af'} />
+                    )}
+                </div>
+                <div>
+                    <div style={{ fontWeight: '600', fontSize: '15px', color: 'var(--color-text)' }}>
+                        {title}
+                    </div>
+                    <div style={{ fontSize: '13px', color: 'var(--color-text-muted)', marginTop: '2px' }}>
+                        {isActive && descriptionActive ? descriptionActive : description}
+                    </div>
+                </div>
+            </div>
+            <div style={{
+                width: '48px',
+                height: '28px',
+                borderRadius: '14px',
+                background: isActive ? color : '#d1d5db',
+                display: 'flex',
+                alignItems: 'center',
+                padding: '2px',
+                transition: 'background 0.2s',
+                flexShrink: 0
+            }}>
+                <motion.div
+                    animate={{ x: isActive ? 20 : 0 }}
+                    transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                    style={{
+                        width: '24px',
+                        height: '24px',
+                        borderRadius: '50%',
+                        background: 'white',
+                        boxShadow: '0 2px 6px rgba(0,0,0,0.2)'
+                    }}
+                />
+            </div>
+        </motion.div>
+    );
+
     return (
         <PageTransition>
-            <div className="p-4 pb-24">
-                <div className="flex items-center gap-4 mb-6">
-                    <button onClick={() => navigate(-1)}><ArrowLeft size={24} /></button>
-                    <h1 className="font-bold text-xl">Créer un événement</h1>
+            <div style={{
+                minHeight: '100vh',
+                background: 'var(--color-background)',
+                paddingBottom: '100px'
+            }}>
+                {/* Header with gradient */}
+                <div style={{
+                    background: 'linear-gradient(135deg, #fbbf24 0%, #f472b6 50%, #fb7185 100%)',
+                    padding: '20px 20px 24px',
+                    borderBottomLeftRadius: '28px',
+                    borderBottomRightRadius: '28px',
+                    marginBottom: '20px'
+                }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                        <button
+                            onClick={() => navigate(-1)}
+                            style={{
+                                background: 'transparent',
+                                border: 'none',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                cursor: 'pointer',
+                                padding: '8px'
+                            }}
+                        >
+                            <ArrowLeft size={24} color="#1f2937" />
+                        </button>
+                        <div>
+                            <h1 style={{
+                                fontWeight: '800',
+                                fontSize: '24px',
+                                color: '#1f2937',
+                                margin: 0,
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '10px'
+                            }}>
+                                <Sparkles size={24} />
+                                Créer un événement
+                            </h1>
+                            <p style={{ fontSize: '14px', color: 'rgba(0,0,0,0.6)', margin: '4px 0 0' }}>
+                                Partagez un moment unique
+                            </p>
+                        </div>
+                    </div>
                 </div>
 
-                {/* Alerte si limite atteinte */}
+                {/* Alertes */}
                 {!canCreateEvent && (
                     <div style={{
                         background: '#fef3c7',
                         border: '1px solid #fbbf24',
-                        borderRadius: '12px',
+                        borderRadius: '16px',
                         padding: '16px',
-                        marginBottom: '16px',
+                        margin: '0 20px 20px',
                         display: 'flex',
                         alignItems: 'center',
                         gap: '12px'
@@ -91,180 +222,249 @@ const CreateEvent: React.FC = () => {
                                 Limite atteinte
                             </div>
                             <div style={{ fontSize: '13px', color: '#a16207' }}>
-                                Vous avez déjà {myActiveEvents.length} événement(s) actif(s). 
-                                Passez en Premium pour en créer plus.
+                                Vous avez déjà {myActiveEvents.length} événement(s) actif(s).
                             </div>
                         </div>
                     </div>
                 )}
 
-                {/* Info limite participants */}
-                {limitParticipants && (
-                    <div style={{
-                        background: '#f3f4f6',
-                        borderRadius: '12px',
-                        padding: '12px 16px',
-                        marginBottom: '16px',
+                <form
+                    onSubmit={handleSubmit}
+                    style={{
+                        padding: '0 20px',
+                        opacity: canCreateEvent ? 1 : 0.5,
+                        pointerEvents: canCreateEvent ? 'auto' : 'none',
                         display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px',
-                        fontSize: '13px',
-                        color: 'var(--color-text-muted)'
-                    }}>
-                        <Users size={16} />
-                        <span>Limite de <strong>{maxParticipantsAllowed}</strong> participants max (Premium: 20)</span>
-                    </div>
-                )}
-
-                <form onSubmit={handleSubmit} className="flex flex-col gap-4" style={{ opacity: canCreateEvent ? 1 : 0.5, pointerEvents: canCreateEvent ? 'auto' : 'none' }}>
-                    <div
-                        className="card flex items-center justify-center text-muted"
-                        style={{ height: '150px', border: '2px dashed var(--color-border)', cursor: 'pointer' }}
+                        flexDirection: 'column',
+                        gap: '20px'
+                    }}
+                >
+                    {/* Photo upload */}
+                    <motion.div
+                        whileTap={{ scale: 0.98 }}
+                        style={{
+                            height: '160px',
+                            border: '2px dashed var(--color-border)',
+                            borderRadius: '20px',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '12px',
+                            background: 'var(--color-surface)',
+                            transition: 'all 0.2s'
+                        }}
                     >
-                        <div className="flex flex-col items-center gap-2">
-                            <ImageIcon size={32} />
-                            <span className="text-sm">Ajouter une photo</span>
+                        <div style={{
+                            width: '56px',
+                            height: '56px',
+                            borderRadius: '16px',
+                            background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                        }}>
+                            <ImageIcon size={28} color="white" />
                         </div>
-                    </div>
+                        <span style={{ fontSize: '15px', fontWeight: '600', color: 'var(--color-text-muted)' }}>
+                            Ajouter une photo
+                        </span>
+                    </motion.div>
 
-                    <div className="flex flex-col gap-2">
-                        <label className="text-sm font-bold">Titre de l'événement</label>
+                    {/* Titre */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                        <label style={{ fontSize: '14px', fontWeight: '700', color: 'var(--color-text)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <FileText size={16} />
+                            Titre de l'événement
+                        </label>
                         <input
                             required
-                            className="card p-3"
                             value={formData.title}
                             onChange={(e: ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, title: e.target.value })}
-                            placeholder="Ex: Soirée Pizza"
-                            style={{ border: 'none', background: 'var(--color-surface)' }}
+                            placeholder="Ex: Soirée Pizza entre amis"
+                            style={{
+                                padding: '16px',
+                                borderRadius: '14px',
+                                border: '1px solid var(--color-border)',
+                                background: 'var(--color-surface)',
+                                fontSize: '16px',
+                                color: 'var(--color-text)',
+                                outline: 'none'
+                            }}
                         />
                     </div>
 
-                    <div className="flex gap-4">
-                        <div className="flex-1 flex flex-col gap-2">
-                            <label className="text-sm font-bold">Date</label>
+                    {/* Date & Heure */}
+                    <div style={{ display: 'flex', gap: '12px' }}>
+                        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                            <label style={{ fontSize: '14px', fontWeight: '700', color: 'var(--color-text)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <Calendar size={16} />
+                                Date
+                            </label>
                             <input
                                 type="date"
                                 required
-                                className="card p-3 w-full"
                                 value={formData.date}
                                 onChange={(e: ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, date: e.target.value })}
+                                style={{
+                                    padding: '16px',
+                                    borderRadius: '14px',
+                                    border: '1px solid var(--color-border)',
+                                    background: 'var(--color-surface)',
+                                    fontSize: '15px',
+                                    color: 'var(--color-text)',
+                                    outline: 'none',
+                                    colorScheme: 'dark'
+                                }}
                             />
                         </div>
-                        <div className="flex-1 flex flex-col gap-2">
-                            <label className="text-sm font-bold">Heure</label>
+                        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                            <label style={{ fontSize: '14px', fontWeight: '700', color: 'var(--color-text)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <Clock size={16} />
+                                Heure
+                            </label>
                             <input
                                 type="time"
                                 required
-                                className="card p-3 w-full"
                                 value={formData.time}
                                 onChange={(e: ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, time: e.target.value })}
+                                style={{
+                                    padding: '16px',
+                                    borderRadius: '14px',
+                                    border: '1px solid var(--color-border)',
+                                    background: 'var(--color-surface)',
+                                    fontSize: '15px',
+                                    color: 'var(--color-text)',
+                                    outline: 'none',
+                                    colorScheme: 'dark'
+                                }}
                             />
                         </div>
                     </div>
 
-                    <div className="flex gap-4">
-                        <div className="flex-1 flex flex-col gap-2">
-                            <label className="text-sm font-bold">Lieu</label>
+                    {/* Lieu & Max */}
+                    <div style={{ display: 'flex', gap: '12px' }}>
+                        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                            <label style={{ fontSize: '14px', fontWeight: '700', color: 'var(--color-text)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <MapPin size={16} />
+                                Lieu
+                            </label>
                             <input
-                                className="card p-3"
                                 value={formData.location}
                                 onChange={(e: ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, location: e.target.value })}
                                 placeholder="Ex: Parc Monceau"
+                                style={{
+                                    padding: '16px',
+                                    borderRadius: '14px',
+                                    border: '1px solid var(--color-border)',
+                                    background: 'var(--color-surface)',
+                                    fontSize: '15px',
+                                    color: 'var(--color-text)',
+                                    outline: 'none'
+                                }}
                             />
                         </div>
-                        <div className="flex flex-col gap-2" style={{ width: '120px' }}>
-                            <label className="text-sm font-bold flex items-center gap-1">
-                                <Users size={14} />
-                                Max {limitParticipants && <Lock size={10} color="#f59e0b" />}
+                        <div style={{ width: '100px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                            <label style={{ fontSize: '14px', fontWeight: '700', color: 'var(--color-text)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                <Users size={16} />
+                                Max
+                                {limitParticipants && <Lock size={12} color="#f59e0b" />}
                             </label>
                             <input
                                 type="number"
                                 min="1"
                                 max={maxParticipantsAllowed}
-                                className="card p-3"
                                 value={formData.maxAttendees}
                                 onChange={(e: ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, maxAttendees: Math.min(parseInt(e.target.value) || 1, maxParticipantsAllowed) })}
-                                placeholder={String(maxParticipantsAllowed)}
+                                style={{
+                                    padding: '16px',
+                                    borderRadius: '14px',
+                                    border: '1px solid var(--color-border)',
+                                    background: 'var(--color-surface)',
+                                    fontSize: '15px',
+                                    color: 'var(--color-text)',
+                                    outline: 'none',
+                                    textAlign: 'center'
+                                }}
                             />
                         </div>
                     </div>
 
-                    <div className="flex flex-col gap-2">
-                        <label className="text-sm font-bold">Description</label>
+                    {/* Description */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                        <label style={{ fontSize: '14px', fontWeight: '700', color: 'var(--color-text)' }}>
+                            Description
+                        </label>
                         <textarea
-                            className="card p-3"
                             rows={4}
                             value={formData.description}
                             onChange={(e: ChangeEvent<HTMLTextAreaElement>) => setFormData({ ...formData, description: e.target.value })}
-                            placeholder="Dites-nous en plus..."
-                            style={{ resize: 'none' }}
+                            placeholder="Décrivez votre événement..."
+                            style={{
+                                padding: '16px',
+                                borderRadius: '14px',
+                                border: '1px solid var(--color-border)',
+                                background: 'var(--color-surface)',
+                                fontSize: '15px',
+                                color: 'var(--color-text)',
+                                outline: 'none',
+                                resize: 'none',
+                                fontFamily: 'inherit'
+                            }}
                         />
                     </div>
 
-                    {/* Option pour masquer l'adresse */}
-                    <div 
-                        className="card p-4"
-                        onClick={() => setFormData({ ...formData, hideAddressUntilRegistered: !formData.hideAddressUntilRegistered })}
-                        style={{ 
-                            cursor: 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'space-between',
-                            gap: '12px'
-                        }}
-                    >
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                            <div style={{
-                                width: '40px',
-                                height: '40px',
-                                borderRadius: '10px',
-                                background: formData.hideAddressUntilRegistered ? '#fef3c7' : '#f3f4f6',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center'
-                            }}>
-                                {formData.hideAddressUntilRegistered ? (
-                                    <EyeOff size={20} color="#f59e0b" />
-                                ) : (
-                                    <MapPin size={20} color="#9ca3af" />
-                                )}
-                            </div>
-                            <div>
-                                <div style={{ fontWeight: '600', fontSize: '14px', color: 'var(--color-text)' }}>
-                                    Masquer l'adresse
-                                </div>
-                                <div style={{ fontSize: '12px', color: 'var(--color-text-muted)' }}>
-                                    {formData.hideAddressUntilRegistered 
-                                        ? "Visible uniquement pour les participants" 
-                                        : "Adresse visible par tous"}
-                                </div>
-                            </div>
-                        </div>
-                        <div style={{
-                            width: '44px',
-                            height: '26px',
-                            borderRadius: '13px',
-                            background: formData.hideAddressUntilRegistered ? '#f59e0b' : '#d1d5db',
-                            display: 'flex',
-                            alignItems: 'center',
-                            padding: '2px',
-                            transition: 'background 0.2s'
-                        }}>
-                            <div style={{
-                                width: '22px',
-                                height: '22px',
-                                borderRadius: '50%',
-                                background: 'white',
-                                boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
-                                transform: formData.hideAddressUntilRegistered ? 'translateX(18px)' : 'translateX(0)',
-                                transition: 'transform 0.2s'
-                            }} />
-                        </div>
+                    {/* Options Section */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '8px' }}>
+                        <h3 style={{ fontSize: '13px', fontWeight: '700', color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                            Options
+                        </h3>
+
+                        {/* Toggle: Masquer l'adresse */}
+                        <ToggleOption
+                            icon={MapPin}
+                            iconActive={EyeOff}
+                            title="Masquer l'adresse"
+                            description="Adresse visible par tous"
+                            descriptionActive="Visible uniquement pour les inscrits"
+                            isActive={formData.hideAddressUntilRegistered}
+                            onToggle={() => setFormData({ ...formData, hideAddressUntilRegistered: !formData.hideAddressUntilRegistered })}
+                            color="#f59e0b"
+                        />
+
+                        {/* Toggle: Validation manuelle */}
+                        <ToggleOption
+                            icon={Users}
+                            iconActive={UserCheck}
+                            title="Validation manuelle"
+                            description="Inscriptions automatiques"
+                            descriptionActive="Vous validez chaque participant"
+                            isActive={formData.requireManualApproval}
+                            onToggle={() => setFormData({ ...formData, requireManualApproval: !formData.requireManualApproval })}
+                            color="#8b5cf6"
+                        />
                     </div>
 
-                    <button type="submit" className="btn btn-primary mt-4 py-4 text-lg">
-                        Publier l'événement
-                    </button>
+                    {/* Submit button */}
+                    <motion.button
+                        type="submit"
+                        whileTap={{ scale: 0.98 }}
+                        style={{
+                            marginTop: '12px',
+                            padding: '18px',
+                            borderRadius: '16px',
+                            border: 'none',
+                            background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a855f7 100%)',
+                            color: 'white',
+                            fontSize: '17px',
+                            fontWeight: '700',
+                            cursor: 'pointer',
+                            boxShadow: '0 8px 24px rgba(139, 92, 246, 0.4)'
+                        }}
+                    >
+                        ✨ Publier l'événement
+                    </motion.button>
                 </form>
             </div>
         </PageTransition>
@@ -272,4 +472,3 @@ const CreateEvent: React.FC = () => {
 };
 
 export default CreateEvent;
-
