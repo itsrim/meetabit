@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
-import { getUserData, CURRENT_USER_ID } from './VisitContext';
+import { CURRENT_USER_ID, getUserData, CURRENT_USER } from './VisitContext';
+import { SUGGESTIONS } from '../data/mockSuggestions';
 
 export interface Message {
     id: number;
@@ -28,6 +29,7 @@ export interface SocialGroup {
     msg: number;
     lastMessage: string;
     lastMessageDate: Date;
+    eventId?: number; // Lien optionnel avec un événement
 }
 
 export interface ChatSettings {
@@ -45,10 +47,14 @@ interface MessageContextType {
     chatSettings: ChatSettings;
     updateChatSettings: (settings: Partial<ChatSettings>) => void;
     groups: SocialGroup[];
+    kickedGroupIds: number[];
     leaveGroup: (groupId: number) => void;
     removeMember: (groupId: number, memberName: string) => void;
     addMember: (groupId: number, memberName: string) => void;
-    createGroup: (name: string) => void;
+    createGroup: (name: string, eventId?: number) => number;
+    joinGroup: (groupId: number) => void;
+    isKicked: (groupId: number) => boolean;
+    simulateMessage: (groupId: number) => void;
 }
 
 const MessageContext = createContext<MessageContextType | undefined>(undefined);
@@ -76,21 +82,69 @@ export const MessageProvider: React.FC<{ children: ReactNode }> = ({ children })
         { id: 1, name: 'Team Padel', members: ['Lucas', 'Théo', 'Marie', 'Moi'], images: ['https://i.pravatar.cc/150?img=1', 'https://i.pravatar.cc/150?img=2', 'https://i.pravatar.cc/150?img=3'], msg: 2, lastMessage: "On joue demain ?", lastMessageDate: new Date(Date.now() - 15 * 60 * 1000) },
         { id: 2, name: 'Amis Pro', members: ['Sophie', 'Marc', 'Moi'], images: ['https://i.pravatar.cc/150?img=5', 'https://i.pravatar.cc/150?img=6'], msg: 0, lastMessage: "Le compte rendu est prêt.", lastMessageDate: new Date(Date.now() - 2 * 60 * 60 * 1000) },
         { id: 3, name: 'Rando Dimanche', members: ['Julie', 'Antoine', 'Léa', 'Kevin', 'Moi'], images: ['https://i.pravatar.cc/150?img=9', 'https://i.pravatar.cc/150?img=10', 'https://i.pravatar.cc/150?img=11', 'https://i.pravatar.cc/150?img=12'], msg: 5, lastMessage: "RDV 8h à la gare", lastMessageDate: new Date(Date.now() - 5 * 60 * 1000) },
-        { id: 4, name: 'Apéro Jeux', members: ['Clémence', 'Thomas', 'Moi'], images: ['https://i.pravatar.cc/150?img=4', 'https://i.pravatar.cc/150?img=7'], msg: 1, lastMessage: "Je ramène le Monopoly", lastMessageDate: new Date(Date.now() - 45 * 60 * 1000) },
+        { id: 4, eventId: 1, name: 'Soirée Jeux', members: ['Alice', 'Moi'], images: ['https://i.pravatar.cc/150?img=11'], msg: 2, lastMessage: "On commence à quelle heure ?", lastMessageDate: new Date(Date.now() - 30 * 60 * 1000) },
         { id: 5, name: 'Famille', members: ['Maman', 'Papa', 'Sœur', 'Moi'], images: ['https://i.pravatar.cc/150?img=8', 'https://i.pravatar.cc/150?img=13', 'https://i.pravatar.cc/150?img=14'], msg: 0, lastMessage: "Bisous à tous !", lastMessageDate: new Date(Date.now() - 24 * 60 * 60 * 1000) },
-        { id: 6, name: 'Voyage 2025', members: ['Alice', 'Bob', 'Moi'], images: ['https://i.pravatar.cc/150?img=11', 'https://i.pravatar.cc/150?img=15'], msg: 3, lastMessage: "Billets réservés !", lastMessageDate: new Date(Date.now() - 10 * 60 * 1000) },
+        { id: 6, eventId: 2, name: 'Voyage 2025', members: ['Alice', 'Bob', 'Moi'], images: ['https://i.pravatar.cc/150?img=11', 'https://i.pravatar.cc/150?img=15'], msg: 3, lastMessage: "Billets réservés !", lastMessageDate: new Date(Date.now() - 10 * 60 * 1000) },
         { id: 7, name: 'Voisins', members: ['Mr. Martin', 'Mme. Dupont', 'Julie', 'Moi'], images: ['https://i.pravatar.cc/150?img=16', 'https://i.pravatar.cc/150?img=17', 'https://i.pravatar.cc/150?img=18'], msg: 0, lastMessage: "Qui a ma clé ?", lastMessageDate: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000) },
     ]);
 
+    const [kickedGroupIds, setKickedGroupIds] = useState<number[]>([]);
+
     const leaveGroup = (groupId: number) => {
-        setGroups(prev => prev.filter(g => g.id !== groupId));
+        setGroups(prev => prev.reduce<SocialGroup[]>((acc, g) => {
+            if (g.id === groupId) {
+                if (g.eventId) {
+                    // Si lié à un événement, on reste dans l'array mais on n'est plus membre
+                    acc.push({
+                        ...g,
+                        members: g.members.filter(m => m !== 'Moi'),
+                        images: g.images.filter(img => img !== CURRENT_USER.image)
+                    });
+                }
+                // Sinon on le supprime (acc.filter sémantique)
+            } else {
+                acc.push(g);
+            }
+            return acc;
+        }, []));
+
+        const group = groups.find(g => g.id === groupId);
+        if (group?.eventId) {
+            setKickedGroupIds(prev => [...prev, groupId]);
+        }
     };
+
+    const joinGroup = (groupId: number) => {
+        if (kickedGroupIds.includes(groupId)) return;
+
+        setGroups(prev => prev.map(g => {
+            if (g.id === groupId && !g.members.includes('Moi')) {
+                return {
+                    ...g,
+                    members: ['Moi', ...g.members],
+                    images: [CURRENT_USER.image, ...g.images]
+                };
+            }
+            return g;
+        }));
+    };
+
+    const isKicked = (groupId: number) => kickedGroupIds.includes(groupId);
     const addMember = (groupId: number, memberName: string) => {
         setGroups(prev => prev.map(g => {
             if (g.id === groupId) {
-                // Éviter les doublons
+                // Éviter les doublons de membres
                 if (g.members.includes(memberName)) return g;
-                return { ...g, members: [...g.members, memberName] };
+
+                // Trouver l'image du membre
+                const friend = SUGGESTIONS.find(f => f.name === memberName);
+                const memberImage = friend ? friend.image : (memberName === 'Moi' ? CURRENT_USER.image : `https://i.pravatar.cc/100?u=${memberName}`);
+
+                return {
+                    ...g,
+                    members: [...g.members, memberName],
+                    images: [...g.images, memberImage]
+                };
             }
             return g;
         }));
@@ -99,10 +153,42 @@ export const MessageProvider: React.FC<{ children: ReactNode }> = ({ children })
     const removeMember = (groupId: number, memberName: string) => {
         setGroups(prev => prev.map(g => {
             if (g.id === groupId) {
-                return { ...g, members: g.members.filter(m => m !== memberName) };
+                const memberIndex = g.members.indexOf(memberName);
+                if (memberIndex === -1) return g;
+
+                const newMembers = g.members.filter(m => m !== memberName);
+                const newImages = [...g.images];
+                // On retire l'image correspondant à l'index du membre (si elle existe)
+                if (memberIndex < g.images.length) {
+                    newImages.splice(memberIndex, 1);
+                }
+
+                return { ...g, members: newMembers, images: newImages };
             }
             return g;
         }));
+    };
+
+    const createGroup = (name: string, eventId?: number): number => {
+        const id = Date.now();
+        const newGroup: SocialGroup = {
+            id,
+            name,
+            images: [CURRENT_USER.image],
+            msg: 0,
+            lastMessage: "Groupe créé",
+            lastMessageDate: new Date(),
+            members: ['Moi'],
+            eventId
+        };
+        setGroups(prev => [newGroup, ...prev]);
+        return id;
+    };
+
+    const simulateMessage = (groupId: number) => {
+        setGroups(prev => prev.map(g =>
+            g.id === groupId ? { ...g, msg: (g.msg || 0) + 1, lastMessage: "Nouveau message !" } : g
+        ));
     };
     const [chatSettings, setChatSettings] = useState<ChatSettings>({
         muteSounds: false,
@@ -242,10 +328,13 @@ export const MessageProvider: React.FC<{ children: ReactNode }> = ({ children })
             chatSettings,
             updateChatSettings,
             groups,
+            kickedGroupIds,
             leaveGroup,
             removeMember,
             addMember,
-            createGroup
+            createGroup,
+            joinGroup,
+            isKicked
         }}>
             {children}
         </MessageContext.Provider>

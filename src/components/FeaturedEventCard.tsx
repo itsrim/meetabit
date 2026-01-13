@@ -1,6 +1,8 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MapPin, CheckCircle2 } from 'lucide-react';
+import { MapPin, CheckCircle2, MessageCircle, Plus, Ban } from 'lucide-react';
+import { useMessages } from '../context/MessageContext';
+import { toast } from 'sonner';
 import { Event } from '../types';
 import ParticipantStack from './ParticipantStack';
 import { useTranslation } from 'react-i18next';
@@ -15,7 +17,8 @@ const FeaturedEventCard: React.FC<FeaturedEventCardProps> = ({
     backgroundColor = '#c2410c'
 }) => {
     const navigate = useNavigate();
-    const { i18n } = useTranslation();
+    const { t, i18n } = useTranslation();
+    const { groups, joinGroup, isKicked } = useMessages();
 
     const formattedDate = {
         day: event.date.getDate(),
@@ -91,6 +94,117 @@ const FeaturedEventCard: React.FC<FeaturedEventCardProps> = ({
                 <span style={{ fontSize: '11px', fontWeight: '800', textTransform: 'uppercase' }}>{formattedDate.month}</span>
                 <span style={{ fontSize: '10px', fontWeight: '700', opacity: 0.7 }}>{formattedDate.year}</span>
             </div>
+
+            {/* Chat Icon Overlay */}
+            {(() => {
+                const associatedGroup = groups.find(g => g.eventId === event.id);
+                if (!associatedGroup) return null;
+
+                const kicked = isKicked(associatedGroup.id);
+                const isMember = associatedGroup.members.includes('Moi');
+                const canJoin = event.registered && !isMember && !kicked;
+                const unreadCount = associatedGroup.msg || 0;
+
+                return (
+                    <div
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            if (kicked) {
+                                toast.error(t('chat.accessDenied'));
+                                return;
+                            }
+                            if (isMember) {
+                                navigate(`/chat/group-${associatedGroup.id}`);
+                            } else if (canJoin) {
+                                joinGroup(associatedGroup.id);
+                                navigate(`/chat/group-${associatedGroup.id}`);
+                                toast.success(t('chat.joinChat'));
+                            } else if (!event.registered) {
+                                toast.info("Inscrivez-vous d'abord pour rejoindre la discussion !");
+                            }
+                        }}
+                        style={{
+                            position: 'absolute',
+                            top: '12px',
+                            right: '12px',
+                            width: '40px',
+                            height: '40px',
+                            background: 'white',
+                            borderRadius: '50%',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            boxShadow: '0 4px 10px rgba(0,0,0,0.2)',
+                            zIndex: 20,
+                            cursor: 'pointer'
+                        }}
+                    >
+                        <MessageCircle size={20} color="#1e293b" />
+
+                        {/* Badge de messages non lus */}
+                        {unreadCount > 0 && (
+                            <div style={{
+                                position: 'absolute',
+                                top: '-5px',
+                                right: '-5px',
+                                background: '#ef4444',
+                                color: 'white',
+                                fontSize: '9px',
+                                fontWeight: '800',
+                                minWidth: '16px',
+                                height: '16px',
+                                borderRadius: '8px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                border: '1.5px solid white',
+                                padding: '0 3px',
+                                zIndex: 2
+                            }}>
+                                {unreadCount}
+                            </div>
+                        )}
+
+                        {/* Indicateur "+" ou "Ban" décalé en bas à droite */}
+                        {canJoin && (
+                            <div style={{
+                                position: 'absolute',
+                                bottom: '-2px',
+                                right: '-2px',
+                                background: '#22c55e',
+                                borderRadius: '50%',
+                                width: '14px',
+                                height: '14px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                border: '1.5px solid white',
+                                zIndex: 3
+                            }}>
+                                <Plus size={8} color="white" strokeWidth={5} />
+                            </div>
+                        )}
+                        {kicked && (
+                            <div style={{
+                                position: 'absolute',
+                                bottom: '-2px',
+                                right: '-2px',
+                                background: '#ef4444',
+                                borderRadius: '50%',
+                                width: '14px',
+                                height: '14px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                border: '1.5px solid white',
+                                zIndex: 3
+                            }}>
+                                <Ban size={8} color="white" strokeWidth={5} />
+                            </div>
+                        )}
+                    </div>
+                );
+            })()}
 
             {/* Title Overlay in Image */}
             <div style={{

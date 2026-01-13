@@ -1,8 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, X, Crown, Eye } from 'lucide-react';
+import { Search, X, Crown, Eye, Plus } from 'lucide-react';
 import { GroupAvatar } from './GroupAvatar';
 import { useMessages } from '../../context/MessageContext';
 
@@ -37,7 +37,9 @@ const SocialHeader: React.FC<SocialHeaderProps> = ({
 }) => {
     const { t } = useTranslation();
     const navigate = useNavigate();
-    const { groups } = useMessages();
+    const { groups, createGroup } = useMessages();
+    const [showCreateModal, setShowCreateModal] = useState(false);
+    const [newGroupName, setNewGroupName] = useState('');
 
     const sortedGroups = [...groups].sort((a, b) => b.lastMessageDate.getTime() - a.lastMessageDate.getTime());
 
@@ -126,9 +128,141 @@ const SocialHeader: React.FC<SocialHeaderProps> = ({
                                 </span>
                             </div>
                         ))}
+
+                        {/* Bouton Ajouter un groupe */}
+                        <div
+                            onClick={() => setShowCreateModal(true)}
+                            style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', flexShrink: 0 }}
+                        >
+                            <div style={{
+                                width: '56px',
+                                height: '56px',
+                                borderRadius: '50%',
+                                border: '2px dashed rgba(255,255,255,0.6)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                background: 'rgba(255,255,255,0.1)',
+                                cursor: 'pointer',
+                                transition: 'all 0.2s'
+                            }}>
+                                <Plus size={24} color="white" />
+                            </div>
+                            <span style={{ fontSize: '12px', fontWeight: '700', color: 'white', textShadow: '0 1px 2px rgba(0,0,0,0.2)' }}>
+                                {t('chat.newGroup') || "Nouveau"}
+                            </span>
+                        </div>
                     </div>
                 </div>
             </div>
+
+            {/* Modal de création de groupe */}
+            <AnimatePresence>
+                {showCreateModal && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        style={{
+                            position: 'fixed',
+                            top: 0, left: 0, right: 0, bottom: 0,
+                            background: 'rgba(0,0,0,0.6)',
+                            backdropFilter: 'blur(5px)',
+                            zIndex: 1000,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            padding: '20px'
+                        }}
+                        onClick={() => setShowCreateModal(false)}
+                    >
+                        <motion.div
+                            initial={{ scale: 0.9, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0.9, opacity: 0 }}
+                            onClick={(e) => e.stopPropagation()}
+                            style={{
+                                background: 'var(--color-surface)',
+                                borderRadius: '24px',
+                                padding: '24px',
+                                width: '100%',
+                                maxWidth: '320px',
+                                boxShadow: '0 20px 40px rgba(0,0,0,0.3)',
+                                textAlign: 'center'
+                            }}
+                        >
+                            <h3 style={{ margin: '0 0 16px', color: 'var(--color-text)', fontWeight: '800' }}>
+                                {t('chat.createGroupTitle') || "Créer un groupe"}
+                            </h3>
+                            <input
+                                autoFocus
+                                type="text"
+                                value={newGroupName}
+                                onChange={(e) => setNewGroupName(e.target.value)}
+                                placeholder={t('chat.groupNamePlaceholder') || "Nom du groupe..."}
+                                style={{
+                                    width: '100%',
+                                    padding: '12px 16px',
+                                    borderRadius: '12px',
+                                    border: '1px solid rgba(0,0,0,0.1)',
+                                    background: 'rgba(0,0,0,0.02)',
+                                    color: 'var(--color-text)',
+                                    fontSize: '15px',
+                                    outline: 'none',
+                                    marginBottom: '20px'
+                                }}
+                                onKeyPress={(e) => {
+                                    if (e.key === 'Enter' && newGroupName.trim()) {
+                                        createGroup(newGroupName.trim());
+                                        setNewGroupName('');
+                                        setShowCreateModal(false);
+                                    }
+                                }}
+                            />
+                            <div style={{ display: 'flex', gap: '12px' }}>
+                                <button
+                                    onClick={() => setShowCreateModal(false)}
+                                    style={{
+                                        flex: 1,
+                                        padding: '12px',
+                                        borderRadius: '12px',
+                                        border: 'none',
+                                        background: 'rgba(0,0,0,0.05)',
+                                        color: 'var(--color-text-muted)',
+                                        fontWeight: '700',
+                                        cursor: 'pointer'
+                                    }}
+                                >
+                                    {t('common.cancel') || "Annuler"}
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        if (newGroupName.trim()) {
+                                            createGroup(newGroupName.trim());
+                                            setNewGroupName('');
+                                            setShowCreateModal(false);
+                                        }
+                                    }}
+                                    disabled={!newGroupName.trim()}
+                                    style={{
+                                        flex: 2,
+                                        padding: '12px',
+                                        borderRadius: '12px',
+                                        border: 'none',
+                                        background: 'linear-gradient(135deg, #fbbf24 0%, #f472b6 100%)',
+                                        color: 'white',
+                                        fontWeight: '700',
+                                        cursor: newGroupName.trim() ? 'pointer' : 'not-allowed',
+                                        opacity: newGroupName.trim() ? 1 : 0.6
+                                    }}
+                                >
+                                    {t('common.create') || "Créer"}
+                                </button>
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
 
             {/* Main Content Area Start (Outer wrap in SocialPage) */}
             <div style={{

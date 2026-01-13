@@ -10,7 +10,8 @@
     "error": "Error",
     "success": "Success",
     "confirm": "Confirm",
-    "close": "Close"
+    "close": "Close",
+    "create": "Create"
   },
   "nav": {
     "explore": "Explore",
@@ -67,7 +68,12 @@
     "confirmLeave": "Are you sure you want to leave this group?",
     "membersCount": "{{count}} members",
     "selectFriend": "Invite a friend",
-    "noMoreFriends": "All your friends are already here"
+    "noMoreFriends": "All your friends are already here",
+    "newGroup": "New",
+    "createGroupTitle": "Create a group",
+    "groupNamePlaceholder": "Group name...",
+    "joinChat": "Join conversation",
+    "accessDenied": "Access denied"
   },
   "events": {
     "title": "Events",

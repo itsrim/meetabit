@@ -1,8 +1,10 @@
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useEvents } from '../context/EventContext';
 import { getUserData } from '../context/VisitContext';
-import { ArrowLeft, MapPin, Clock, Share2, Heart, MessageCircle, Lock } from 'lucide-react';
+import { ArrowLeft, MapPin, Clock, Share2, Heart, MessageCircle, Lock, Plus, Ban } from 'lucide-react';
+import { useMessages } from '../context/MessageContext';
 import PageTransition from './PageTransition';
 import BlurImage from './BlurImage';
 import { toast } from 'sonner';
@@ -12,7 +14,7 @@ const getParticipants = (eventId: number) => {
     // Générer des IDs de participants basés sur l'eventId pour la diversité
     const baseId = (eventId * 7) % 50;
     const participantIds = [baseId, baseId + 1, baseId + 2, baseId + 3].map(id => id % 50);
-    
+
     return participantIds.map(id => {
         const userData = getUserData(id);
         const score = 4.0 + ((id % 10) / 10); // Score entre 4.0 et 4.9
@@ -28,8 +30,10 @@ const getParticipants = (eventId: number) => {
 const EventDetail: React.FC = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
+    const { t } = useTranslation();
     const { events, toggleRegistration } = useEvents();
-    
+    const { groups, joinGroup, isKicked, createGroup } = useMessages();
+
     const event = events.find(e => e.id.toString() === id);
     const participants = getParticipants(parseInt(id || '0'));
 
@@ -171,8 +175,8 @@ const EventDetail: React.FC = () => {
                                 <MapPin size={24} style={{ color: 'var(--color-text-muted)' }} />
                             </div>
                             <div>
-                                <div style={{ 
-                                    fontWeight: '500', 
+                                <div style={{
+                                    fontWeight: '500',
                                     color: 'var(--color-text-muted)',
                                     filter: shouldHideAddress ? 'blur(5px)' : 'none',
                                     display: 'flex',
@@ -218,8 +222,8 @@ const EventDetail: React.FC = () => {
 
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                             {participants.map(p => (
-                                <div 
-                                    key={p.id} 
+                                <div
+                                    key={p.id}
                                     onClick={() => navigate(`/user/${p.id}`)}
                                     style={{ display: 'flex', alignItems: 'center', gap: '16px', cursor: 'pointer' }}
                                 >
@@ -282,20 +286,127 @@ const EventDetail: React.FC = () => {
                         <span style={{ fontSize: '12px', color: 'var(--color-text-muted)' }}>/ personne</span>
                     </div>
 
-                    <button style={{
-                        width: '50px',
-                        height: '50px',
-                        borderRadius: '12px',
-                        border: '1px solid var(--color-border)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        background: 'transparent',
-                        flexShrink: 0,
-                        cursor: 'pointer'
-                    }}>
-                        <MessageCircle size={24} color="var(--color-text)" />
-                    </button>
+                    {(() => {
+                        const associatedGroup = groups.find(g => g.eventId === event.id);
+                        const kicked = associatedGroup ? isKicked(associatedGroup.id) : false;
+                        const isMember = associatedGroup?.members.includes('Moi');
+                        const canJoin = event.registered && !isMember && !kicked;
+                        const unreadCount = associatedGroup?.msg || 0;
+
+                        return (
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    if (associatedGroup) {
+                                        if (kicked) {
+                                            toast.error(t('chat.accessDenied'));
+                                            return;
+                                        }
+                                        if (isMember) {
+                                            navigate(`/chat/group-${associatedGroup.id}`);
+                                        } else if (canJoin) {
+                                            joinGroup(associatedGroup.id);
+                                            navigate(`/chat/group-${associatedGroup.id}`);
+                                            toast.success(t('chat.joinChat'));
+                                        } else if (!event.registered) {
+                                            toast.info("Inscrivez-vous d'abord pour rejoindre la discussion !");
+                                        }
+                                    } else if (event.registered) {
+                                        // Création paresseuse du groupe si inscrit mais pas de groupe
+                                        const newId = createGroup(event.title, event.id);
+                                        // On simule un message reçu pour que l'utilisateur voie la pastille
+                                        setTimeout(() => {
+                                            setGroups(prev => prev.map(g => g.id === newId ? { ...g, msg: 1, lastMessage: "Bienvenue dans la discussion !" } : g));
+                                        }, 1000);
+                                        navigate(`/chat/group-${newId}`);
+                                        toast.success("Discussion créée !");
+                                    } else {
+                                        toast.info("Inscrivez-vous pour démarrer la discussion !");
+                                    }
+                                }}
+                                style={{
+                                    width: '50px',
+                                    height: '50px',
+                                    borderRadius: '12px',
+                                    border: '1px solid var(--color-border)',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    background: 'transparent',
+                                    flexShrink: 0,
+                                    cursor: 'pointer',
+                                    position: 'relative'
+                                }}
+                            >
+                                <MessageCircle size={24} color="var(--color-text)" />
+
+                                {/* Badge de messages non lus - Toujours visible si msg > 0 */}
+                                {unreadCount > 0 && (
+                                    <div style={{
+                                        position: 'absolute',
+                                        top: '-10px',
+                                        right: '-10px',
+                                        background: '#ef4444',
+                                        color: 'white',
+                                        fontSize: '11px',
+                                        fontWeight: '900',
+                                        minWidth: '22px',
+                                        height: '22px',
+                                        borderRadius: '11px',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        border: '2.5px solid var(--color-surface)',
+                                        padding: '0 4px',
+                                        zIndex: 10,
+                                        boxShadow: '0 2px 8px rgba(239, 68, 68, 0.4)'
+                                    }}>
+                                        {unreadCount}
+                                    </div>
+                                )}
+
+                                {/* Indicateur d'ajout si non membre et peut rejoindre - Décalé en bas à droite */}
+                                {canJoin && (
+                                    <div style={{
+                                        position: 'absolute',
+                                        bottom: '-4px',
+                                        right: '-4px',
+                                        background: '#22c55e',
+                                        borderRadius: '50%',
+                                        width: '16px',
+                                        height: '16px',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        border: '2px solid var(--color-surface)',
+                                        zIndex: 3
+                                    }}>
+                                        <Plus size={10} color="white" strokeWidth={4} />
+                                    </div>
+                                )}
+
+                                {/* Indicateur Bloqué - En bas à droite aussi si bloqué */}
+                                {kicked && (
+                                    <div style={{
+                                        position: 'absolute',
+                                        bottom: '-4px',
+                                        right: '-4px',
+                                        background: '#ef4444',
+                                        borderRadius: '50%',
+                                        width: '16px',
+                                        height: '16px',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        border: '2px solid var(--color-surface)',
+                                        zIndex: 3
+                                    }}>
+                                        <Ban size={10} color="white" strokeWidth={4} />
+                                    </div>
+                                )}
+                            </button>
+                        );
+                    })()}
 
                     <button
                         onClick={handleRegistration}
