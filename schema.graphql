@@ -1,0 +1,608 @@
+# ============================================
+# SCHEMA GRAPHQL - Application Événements
+# ============================================
+
+# ============================================
+# SCALARS
+# ============================================
+scalar DateTime
+scalar JSON
+
+# ============================================
+# ENUMS
+# ============================================
+
+enum UserRole {
+  USER
+  PREMIUM
+  ADMIN
+}
+
+enum ParticipationStatus {
+  PENDING      # En attente de validation
+  CONFIRMED    # Validé par l'organisateur
+  REJECTED     # Refusé par l'organisateur
+  CANCELLED    # Annulé par le participant
+}
+
+enum EventCategory {
+  SORTIE
+  SPORT
+  MUSEE
+  DANSE
+  HIKING
+  DRINKS
+  OTHER
+}
+
+enum NotificationType {
+  EVENT_REMINDER
+  NEW_MESSAGE
+  PARTICIPATION_APPROVED
+  PARTICIPATION_REJECTED
+  NEW_PARTICIPANT
+  EVENT_CANCELLED
+  PROFILE_VISIT
+}
+
+enum MessageType {
+  TEXT
+  IMAGE
+  SYSTEM
+}
+
+enum GroupMemberRole {
+  ADMIN
+  MEMBER
+}
+
+# ============================================
+# TYPES - UTILISATEURS
+# ============================================
+
+type User {
+  id: ID!
+  email: String!
+  name: String!
+  avatar: String
+  bio: String
+  score: Float                    # Note moyenne (0-5)
+  role: UserRole!
+  isPremium: Boolean!
+  isAdmin: Boolean!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  
+  # Relations
+  organizedEvents: [Event!]!
+  participations: [Participation!]!
+  favoriteEvents: [Event!]!
+  groups: [GroupMember!]!
+  conversations: [Conversation!]!
+  sentMessages: [Message!]!
+  notifications: [Notification!]!
+  visits: [ProfileVisit!]!        # Visites reçues
+  visitedProfiles: [ProfileVisit!]! # Profils visités
+  blockedUsers: [User!]!
+  
+  # Stats
+  eventsOrganizedCount: Int!
+  eventsParticipatedCount: Int!
+  mutualFriendsCount(userId: ID!): Int!
+}
+
+type UserSettings {
+  id: ID!
+  userId: ID!
+  user: User!
+  
+  # Notifications
+  pushNotifications: Boolean!
+  emailNotifications: Boolean!
+  eventReminders: Boolean!
+  messageNotifications: Boolean!
+  
+  # Privacy
+  profileVisible: Boolean!
+  showOnlineStatus: Boolean!
+  allowMessages: Boolean!
+  
+  # Preferences
+  language: String!
+  theme: String!
+}
+
+type ProfileVisit {
+  id: ID!
+  visitor: User!
+  visited: User!
+  visitedAt: DateTime!
+}
+
+# ============================================
+# TYPES - ÉVÉNEMENTS
+# ============================================
+
+type Event {
+  id: ID!
+  title: String!
+  description: String
+  image: String
+  category: EventCategory!
+  
+  # Date & Lieu
+  date: DateTime!
+  time: String!
+  location: String!
+  coordinates: Coordinates
+  
+  # Capacité
+  maxAttendees: Int!
+  attendeesCount: Int!
+  availableSpots: Int!
+  
+  # Prix
+  price: Float!
+  currency: String!
+  
+  # Options
+  hideAddressUntilRegistered: Boolean!
+  requireManualApproval: Boolean!
+  
+  # Statuts
+  isCancelled: Boolean!
+  isFinished: Boolean!
+  
+  # Dates système
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  registrationDeadline: DateTime
+  
+  # Relations
+  organizer: User!
+  participations: [Participation!]!
+  confirmedParticipants: [User!]!
+  pendingParticipants: [User!]!
+  group: Group                    # Discussion associée
+  favoritedBy: [User!]!
+  
+  # Computed
+  isRegistered(userId: ID!): Boolean!
+  canRegister(userId: ID!): Boolean!
+  participationStatus(userId: ID!): ParticipationStatus
+}
+
+type Coordinates {
+  latitude: Float!
+  longitude: Float!
+}
+
+type Participation {
+  id: ID!
+  user: User!
+  event: Event!
+  status: ParticipationStatus!
+  registeredAt: DateTime!
+  approvedAt: DateTime
+  approvedBy: User
+  cancelledAt: DateTime
+  notes: String                   # Message de l'organisateur
+}
+
+# ============================================
+# TYPES - MESSAGERIE
+# ============================================
+
+type Group {
+  id: ID!
+  name: String!
+  image: String
+  description: String
+  
+  # Lien événement (optionnel)
+  event: Event
+  eventId: ID
+  
+  # Relations
+  members: [GroupMember!]!
+  messages: [Message!]!
+  
+  # Stats
+  memberCount: Int!
+  unreadCount(userId: ID!): Int!
+  lastMessage: Message
+  
+  # Dates
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+type GroupMember {
+  id: ID!
+  user: User!
+  group: Group!
+  role: GroupMemberRole!
+  joinedAt: DateTime!
+  mutedUntil: DateTime
+  isKicked: Boolean!
+  kickedAt: DateTime
+  kickedBy: User
+}
+
+type Conversation {
+  id: ID!
+  participants: [User!]!
+  messages: [Message!]!
+  lastMessage: Message
+  unreadCount(userId: ID!): Int!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  
+  # Pour conversation 1-1
+  otherParticipant(userId: ID!): User
+}
+
+type Message {
+  id: ID!
+  content: String!
+  type: MessageType!
+  
+  # Auteur
+  sender: User!
+  
+  # Destination (l'un ou l'autre)
+  conversation: Conversation
+  group: Group
+  
+  # Statuts
+  isRead: Boolean!
+  readAt: DateTime
+  isEdited: Boolean!
+  editedAt: DateTime
+  isDeleted: Boolean!
+  deletedAt: DateTime
+  
+  # Dates
+  createdAt: DateTime!
+}
+
+# ============================================
+# TYPES - NOTIFICATIONS
+# ============================================
+
+type Notification {
+  id: ID!
+  user: User!
+  type: NotificationType!
+  title: String!
+  body: String!
+  data: JSON                      # Données additionnelles (eventId, userId, etc.)
+  isRead: Boolean!
+  readAt: DateTime
+  createdAt: DateTime!
+  
+  # Relations optionnelles
+  relatedEvent: Event
+  relatedUser: User
+  relatedGroup: Group
+}
+
+# ============================================
+# TYPES - CONFIGURATION / FEATURE FLAGS
+# ============================================
+
+type FeatureConfig {
+  key: String!
+  value: Boolean!
+  label: String!
+  description: String
+  category: String!
+  freeOnly: Boolean!              # Restriction uniquement pour les non-premium
+}
+
+type UserLimits {
+  maxParticipants: Int!
+  maxRegistrations: Int!
+  maxFavorites: Int!
+  maxActiveEvents: Int!
+}
+
+# ============================================
+# TYPES - SUGGESTIONS
+# ============================================
+
+type Suggestion {
+  id: ID!
+  user: User!
+  score: Float!                   # Score de compatibilité
+  mutualFriends: [User!]!
+  mutualEvents: [Event!]!
+  commonInterests: [String!]!
+}
+
+# ============================================
+# INPUTS
+# ============================================
+
+input RegisterInput {
+  email: String!
+  password: String!
+  name: String!
+}
+
+input LoginInput {
+  email: String!
+  password: String!
+}
+
+input UpdateUserInput {
+  name: String
+  bio: String
+  avatar: String
+}
+
+input CreateEventInput {
+  title: String!
+  description: String
+  image: String
+  category: EventCategory!
+  date: DateTime!
+  time: String!
+  location: String!
+  coordinates: CoordinatesInput
+  maxAttendees: Int!
+  price: Float
+  hideAddressUntilRegistered: Boolean
+  requireManualApproval: Boolean
+}
+
+input UpdateEventInput {
+  title: String
+  description: String
+  image: String
+  category: EventCategory
+  date: DateTime
+  time: String
+  location: String
+  coordinates: CoordinatesInput
+  maxAttendees: Int
+  price: Float
+  hideAddressUntilRegistered: Boolean
+  requireManualApproval: Boolean
+}
+
+input CoordinatesInput {
+  latitude: Float!
+  longitude: Float!
+}
+
+input CreateGroupInput {
+  name: String!
+  image: String
+  description: String
+  eventId: ID                     # Optionnel - lier à un événement
+  memberIds: [ID!]
+}
+
+input SendMessageInput {
+  content: String!
+  type: MessageType
+  conversationId: ID              # Pour conversation privée
+  groupId: ID                     # Pour groupe
+}
+
+input UpdateSettingsInput {
+  pushNotifications: Boolean
+  emailNotifications: Boolean
+  eventReminders: Boolean
+  messageNotifications: Boolean
+  profileVisible: Boolean
+  showOnlineStatus: Boolean
+  allowMessages: Boolean
+  language: String
+  theme: String
+}
+
+input EventFilters {
+  category: EventCategory
+  dateFrom: DateTime
+  dateTo: DateTime
+  location: String
+  maxPrice: Float
+  hasAvailableSpots: Boolean
+  organizerId: ID
+}
+
+input PaginationInput {
+  limit: Int
+  offset: Int
+  cursor: String
+}
+
+# ============================================
+# RESPONSES
+# ============================================
+
+type AuthPayload {
+  token: String!
+  refreshToken: String!
+  user: User!
+}
+
+type PaginatedEvents {
+  items: [Event!]!
+  totalCount: Int!
+  hasMore: Boolean!
+  nextCursor: String
+}
+
+type PaginatedUsers {
+  items: [User!]!
+  totalCount: Int!
+  hasMore: Boolean!
+  nextCursor: String
+}
+
+type PaginatedMessages {
+  items: [Message!]!
+  totalCount: Int!
+  hasMore: Boolean!
+  nextCursor: String
+}
+
+# ============================================
+# QUERIES
+# ============================================
+
+type Query {
+  # === Auth ===
+  me: User!
+  mySettings: UserSettings!
+  myLimits: UserLimits!
+  
+  # === Users ===
+  user(id: ID!): User
+  users(search: String, pagination: PaginationInput): PaginatedUsers!
+  suggestions(pagination: PaginationInput): [Suggestion!]!
+  profileVisitors(pagination: PaginationInput): [ProfileVisit!]!
+  
+  # === Events ===
+  event(id: ID!): Event
+  events(filters: EventFilters, pagination: PaginationInput): PaginatedEvents!
+  trendingEvents(limit: Int): [Event!]!
+  myEvents: [Event!]!                       # Événements que j'organise
+  myRegistrations: [Participation!]!        # Événements où je suis inscrit
+  myFavoriteEvents: [Event!]!
+  eventsForDate(date: DateTime!): [Event!]!
+  
+  # === Participations ===
+  eventParticipants(eventId: ID!, status: ParticipationStatus): [Participation!]!
+  pendingApprovals(eventId: ID!): [Participation!]!
+  
+  # === Groups & Conversations ===
+  group(id: ID!): Group
+  myGroups: [Group!]!
+  conversation(id: ID!): Conversation
+  conversationWithUser(userId: ID!): Conversation
+  myConversations: [Conversation!]!
+  
+  # === Messages ===
+  groupMessages(groupId: ID!, pagination: PaginationInput): PaginatedMessages!
+  conversationMessages(conversationId: ID!, pagination: PaginationInput): PaginatedMessages!
+  
+  # === Notifications ===
+  myNotifications(unreadOnly: Boolean, pagination: PaginationInput): [Notification!]!
+  unreadNotificationsCount: Int!
+  
+  # === Config ===
+  featureConfig: [FeatureConfig!]!
+  isPremiumFeature(feature: String!): Boolean!
+}
+
+# ============================================
+# MUTATIONS
+# ============================================
+
+type Mutation {
+  # === Auth ===
+  register(input: RegisterInput!): AuthPayload!
+  login(input: LoginInput!): AuthPayload!
+  logout: Boolean!
+  refreshToken(refreshToken: String!): AuthPayload!
+  forgotPassword(email: String!): Boolean!
+  resetPassword(token: String!, newPassword: String!): Boolean!
+  
+  # === User ===
+  updateUser(input: UpdateUserInput!): User!
+  updateSettings(input: UpdateSettingsInput!): UserSettings!
+  deleteAccount: Boolean!
+  blockUser(userId: ID!): Boolean!
+  unblockUser(userId: ID!): Boolean!
+  visitProfile(userId: ID!): ProfileVisit!
+  
+  # === Premium ===
+  upgradeToPremium(paymentToken: String!): User!
+  cancelPremium: User!
+  
+  # === Events ===
+  createEvent(input: CreateEventInput!): Event!
+  updateEvent(id: ID!, input: UpdateEventInput!): Event!
+  deleteEvent(id: ID!): Boolean!
+  cancelEvent(id: ID!): Event!
+  
+  # === Participations ===
+  registerToEvent(eventId: ID!): Participation!
+  cancelRegistration(eventId: ID!): Participation!
+  approveParticipant(eventId: ID!, userId: ID!): Participation!
+  rejectParticipant(eventId: ID!, userId: ID!, reason: String): Participation!
+  removeParticipant(eventId: ID!, userId: ID!): Boolean!
+  
+  # === Favorites ===
+  addFavorite(eventId: ID!): Event!
+  removeFavorite(eventId: ID!): Event!
+  
+  # === Groups ===
+  createGroup(input: CreateGroupInput!): Group!
+  updateGroup(id: ID!, name: String, image: String, description: String): Group!
+  deleteGroup(id: ID!): Boolean!
+  joinGroup(groupId: ID!): GroupMember!
+  leaveGroup(groupId: ID!): Boolean!
+  addGroupMember(groupId: ID!, userId: ID!): GroupMember!
+  removeGroupMember(groupId: ID!, userId: ID!): Boolean!
+  kickGroupMember(groupId: ID!, userId: ID!): GroupMember!
+  promoteToAdmin(groupId: ID!, userId: ID!): GroupMember!
+  muteGroup(groupId: ID!, until: DateTime): GroupMember!
+  unmuteGroup(groupId: ID!): GroupMember!
+  
+  # === Conversations ===
+  startConversation(userId: ID!): Conversation!
+  deleteConversation(id: ID!): Boolean!
+  
+  # === Messages ===
+  sendMessage(input: SendMessageInput!): Message!
+  editMessage(id: ID!, content: String!): Message!
+  deleteMessage(id: ID!): Boolean!
+  markMessagesAsRead(conversationId: ID, groupId: ID): Boolean!
+  
+  # === Notifications ===
+  markNotificationAsRead(id: ID!): Notification!
+  markAllNotificationsAsRead: Boolean!
+  deleteNotification(id: ID!): Boolean!
+  
+  # === Admin ===
+  toggleFeatureFlag(key: String!, value: Boolean!): FeatureConfig!
+  banUser(userId: ID!, reason: String): User!
+  unbanUser(userId: ID!): User!
+  setUserRole(userId: ID!, role: UserRole!): User!
+}
+
+# ============================================
+# SUBSCRIPTIONS
+# ============================================
+
+type Subscription {
+  # === Messages temps réel ===
+  messageReceived(conversationId: ID, groupId: ID): Message!
+  messageDeleted(conversationId: ID, groupId: ID): ID!
+  
+  # === Notifications temps réel ===
+  notificationReceived: Notification!
+  
+  # === Events temps réel ===
+  participantJoined(eventId: ID!): Participation!
+  participantLeft(eventId: ID!): ID!
+  participationStatusChanged(eventId: ID!): Participation!
+  eventUpdated(eventId: ID!): Event!
+  eventCancelled(eventId: ID!): Event!
+  
+  # === Groups temps réel ===
+  memberJoined(groupId: ID!): GroupMember!
+  memberLeft(groupId: ID!): ID!
+  memberKicked(groupId: ID!): GroupMember!
+  
+  # === Typing indicators ===
+  userTyping(conversationId: ID, groupId: ID): User!
+  
+  # === Présence ===
+  userOnlineStatus(userId: ID!): Boolean!
+}

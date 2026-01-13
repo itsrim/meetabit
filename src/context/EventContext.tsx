@@ -38,11 +38,21 @@ const generateMassiveEvents = (): Event[] => {
         const eventsPerDay = 25 + Math.floor(Math.random() * 15); // 25-40 événements par jour
 
         for (let i = 0; i < eventsPerDay; i++) {
-            const maxAttendees = [20, 30, 50, 75, 100, 150, 200][Math.floor(Math.random() * 7)];
+            const currentId = id++;
+            // Événements avec validation manuelle :
+            // - ID % 4 === 0 → organisateur (peut gérer les inscriptions)
+            // - ID % 4 === 2 → inscrit mais PAS organisateur (voit la liste d'attente sans contrôles)
+            const hasManualApproval = currentId % 2 === 0;
+            const maxAttendees = hasManualApproval 
+                ? [4, 5, 6][Math.floor(Math.random() * 3)] 
+                : [20, 30, 50, 75, 100, 150, 200][Math.floor(Math.random() * 7)];
             const attendees = Math.floor(Math.random() * maxAttendees * 0.95) + 5;
-            const isOrganizer = Math.random() > 0.9;
+            // Organisateur seulement si ID divisible par 4
+            const isOrganizer = currentId % 4 === 0;
+            // Si validation manuelle et pas organisateur → inscrit pour voir la liste d'attente
+            const isRegistered = hasManualApproval ? (isOrganizer || currentId % 4 === 2) : Math.random() > 0.7;
             events.push({
-                id: id++,
+                id: currentId,
                 title: EVENT_TITLES[Math.floor(Math.random() * EVENT_TITLES.length)],
                 image: `https://picsum.photos/800/600?random=${id}`,
                 date: new Date(2026, 0, day),
@@ -51,8 +61,8 @@ const generateMassiveEvents = (): Event[] => {
                 attendees,
                 maxAttendees,
                 description: `Événement passionnant du ${day} janvier. Rejoignez-nous pour une expérience unique !`,
-                registered: Math.random() > 0.7, // 30% de chance d'être inscrit
-                isOrganizer, // 10% de chance d'être organisateur
+                registered: isRegistered,
+                isOrganizer,
                 organizer: isOrganizer ? 'Moi' : ORGANIZER_NAMES[Math.floor(Math.random() * ORGANIZER_NAMES.length)],
                 price: Math.random() > 0.3 ? Math.floor(Math.random() * 150) + 5 : 0,
                 favorite: Math.random() > 0.85, // 15% de chance d'être en favoris

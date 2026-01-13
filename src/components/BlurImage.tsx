@@ -46,10 +46,12 @@ const BlurImage: React.FC<BlurImageProps> = ({
                 }}
             />
 
-            {/* Image avec transition */}
+            {/* Image avec transition et lazy loading natif */}
             <img
                 src={src}
                 alt={alt}
+                loading="lazy"
+                decoding="async"
                 onLoad={() => setIsLoaded(true)}
                 style={{
                     width: '100%',

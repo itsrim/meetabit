@@ -161,20 +161,20 @@ const CreateEvent: React.FC = () => {
                 background: 'var(--color-background)',
                 paddingBottom: '100px'
             }}>
-                {/* Header with gradient */}
+                {/* Header with gradient - FIXED dans le conteneur mobile */}
                 <div style={{
-                    position: 'sticky',
+                    position: 'fixed',
                     top: 0,
-                    left: 0,
-                    right: 0,
-                    flexShrink: 0,
+                    left: '50%',
+                    transform: 'translateX(-50%)',
+                    width: '100%',
+                    maxWidth: 'var(--max-width)',
                     background: 'linear-gradient(135deg, #fbbf24 0%, #f472b6 100%)',
                     padding: '20px 20px 24px',
                     borderBottomLeftRadius: '28px',
                     borderBottomRightRadius: '28px',
                     boxShadow: '0 10px 30px rgba(244, 114, 182, 0.3)',
-                    zIndex: 100,
-                    marginBottom: '20px'
+                    zIndex: 100
                 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                         <button
@@ -210,6 +210,9 @@ const CreateEvent: React.FC = () => {
                         </div>
                     </div>
                 </div>
+
+                {/* Spacer pour compenser le header fixed */}
+                <div style={{ height: '110px' }} />
 
                 {/* Alertes */}
                 {!canCreateEvent && (

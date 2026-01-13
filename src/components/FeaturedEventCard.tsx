@@ -92,7 +92,7 @@ const FeaturedEventCard: React.FC<FeaturedEventCardProps> = ({
             }}>
                 <span style={{ fontSize: '16px', fontWeight: '900', lineHeight: '1' }}>{formattedDate.day}</span>
                 <span style={{ fontSize: '11px', fontWeight: '800', textTransform: 'uppercase' }}>{formattedDate.month}</span>
-                <span style={{ fontSize: '10px', fontWeight: '700', opacity: 0.7 }}>{formattedDate.year}</span>
+                <span style={{ fontSize: '10px', fontWeight: '700', opacity: 0.7 }}>{event.time}</span>
             </div>
 
             {/* Chat Icon Overlay */}
@@ -206,7 +206,7 @@ const FeaturedEventCard: React.FC<FeaturedEventCardProps> = ({
                 );
             })()}
 
-            {/* Title Overlay in Image */}
+            {/* Title & Location Overlay in Image */}
             <div style={{
                 position: 'absolute',
                 bottom: '16px',
@@ -225,6 +225,25 @@ const FeaturedEventCard: React.FC<FeaturedEventCardProps> = ({
                 }}>
                     {event.title}
                 </h3>
+                <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    marginTop: '4px'
+                }}>
+                    <MapPin size={12} color="rgba(255,255,255,0.85)" />
+                    <span style={{
+                        fontSize: '12px',
+                        fontWeight: '600',
+                        color: 'rgba(255,255,255,0.85)',
+                        textShadow: '0 1px 3px rgba(0,0,0,0.3)',
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis'
+                    }}>
+                        {event.location.split(',')[0]}
+                    </span>
+                </div>
             </div>
         </div>
     );

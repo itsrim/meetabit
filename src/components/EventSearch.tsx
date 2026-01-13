@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { Search, SlidersHorizontal, Bell, Crown, MessageCircle, Plus, Ban } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -11,6 +11,10 @@ import BlurImage from './BlurImage';
 import FeaturedEventCard from './FeaturedEventCard';
 import './SearchInput.css';
 
+// Nombre d'éléments chargés initialement et par batch
+const INITIAL_ITEMS = 10;
+const ITEMS_PER_BATCH = 10;
+
 const EventSearch: React.FC = () => {
     const navigate = useNavigate();
     const { t, i18n } = useTranslation();
@@ -19,9 +23,15 @@ const EventSearch: React.FC = () => {
     const { isRestricted } = useFeatureFlags();
     const [selectedCategory, setSelectedCategory] = useState<string>("all");
     const [searchQuery, setSearchQuery] = useState<string>("");
+    const [visibleCount, setVisibleCount] = useState(INITIAL_ITEMS);
+    const loadMoreRef = useRef<HTMLDivElement>(null);
 
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    // Date du jour mémorisée
+    const today = useMemo(() => {
+        const d = new Date();
+        d.setHours(0, 0, 0, 0);
+        return d;
+    }, []);
 
     const TRENDING_COLORS = [
         '#c2410c', // Orange-red (like image)
@@ -43,23 +53,58 @@ const EventSearch: React.FC = () => {
 
     const searchDisabled = isRestricted('disableSearch');
 
-    const filteredEvents = events.filter(event => {
-        const isFromToday = event.date >= today;
-        const matchesSearch = event.title.toLowerCase().includes(searchQuery.toLowerCase());
-        const matchesCategory = selectedCategory === "all" || event.category === selectedCategory;
-        return isFromToday && matchesSearch && matchesCategory;
-    });
+    // Mémoisation des événements filtrés et triés
+    const sortedEvents = useMemo(() => {
+        const filtered = events.filter(event => {
+            const isFromToday = event.date >= today;
+            const matchesSearch = event.title.toLowerCase().includes(searchQuery.toLowerCase());
+            const matchesCategory = selectedCategory === "all" || event.category === selectedCategory;
+            return isFromToday && matchesSearch && matchesCategory;
+        });
 
-    const sortedEvents = [...filteredEvents].sort((a, b) => {
-        const dateCompare = a.date.getTime() - b.date.getTime();
-        if (dateCompare !== 0) return dateCompare;
-        const timeA = a.time.split(':').map(Number);
-        const timeB = b.time.split(':').map(Number);
-        return (timeA[0] * 60 + timeA[1]) - (timeB[0] * 60 + timeB[1]);
-    });
+        return filtered.sort((a, b) => {
+            const dateCompare = a.date.getTime() - b.date.getTime();
+            if (dateCompare !== 0) return dateCompare;
+            const timeA = a.time.split(':').map(Number);
+            const timeB = b.time.split(':').map(Number);
+            return (timeA[0] * 60 + timeA[1]) - (timeB[0] * 60 + timeB[1]);
+        });
+    }, [events, today, searchQuery, selectedCategory]);
 
-    const upcomingTrending = sortedEvents.slice(0, 5);
-    const allEvents = sortedEvents;
+    // Reset du nombre visible quand les filtres changent
+    useEffect(() => {
+        setVisibleCount(INITIAL_ITEMS);
+    }, [searchQuery, selectedCategory]);
+
+    // IntersectionObserver pour le chargement progressif (virtualisation légère)
+    useEffect(() => {
+        const observer = new IntersectionObserver(
+            (entries) => {
+                if (entries[0].isIntersecting && visibleCount < sortedEvents.length) {
+                    setVisibleCount(prev => Math.min(prev + ITEMS_PER_BATCH, sortedEvents.length));
+                }
+            },
+            { rootMargin: '200px' }
+        );
+
+        if (loadMoreRef.current) {
+            observer.observe(loadMoreRef.current);
+        }
+
+        return () => observer.disconnect();
+    }, [visibleCount, sortedEvents.length]);
+
+    // Map des groupes par eventId pour éviter les .find() répétés
+    const groupsByEventId = useMemo(() => {
+        const map = new Map<number, typeof groups[0]>();
+        groups.forEach(g => {
+            if (g.eventId !== undefined) map.set(g.eventId, g);
+        });
+        return map;
+    }, [groups]);
+
+    const upcomingTrending = useMemo(() => sortedEvents.slice(0, 5), [sortedEvents]);
+    const visibleEvents = useMemo(() => sortedEvents.slice(0, visibleCount), [sortedEvents, visibleCount]);
 
     return (
         <PageTransition>
@@ -227,10 +272,15 @@ const EventSearch: React.FC = () => {
                     })}
                 </div>
 
-                {/* Masonry Grid */}
-                <div style={{ padding: '0 24px', columns: '2', columnGap: '16px' }}>
-                    {allEvents.map((event, index) => {
-                        const heights = [180, 240, 200, 260];
+                {/* Grid - Virtualisé avec chargement progressif (ordre chronologique respecté) */}
+                <div style={{ 
+                    padding: '0 24px', 
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(2, 1fr)',
+                    gap: '12px'
+                }}>
+                    {visibleEvents.map((event, index) => {
+                        const heights = [180, 220, 200, 240];
                         const height = heights[index % heights.length];
 
                         return (
@@ -238,8 +288,6 @@ const EventSearch: React.FC = () => {
                                 key={`${event.id}-${index}`}
                                 onClick={() => navigate(`/event/${event.id}`)}
                                 style={{
-                                    breakInside: 'avoid',
-                                    marginBottom: '12px',
                                     position: 'relative',
                                     borderRadius: '20px',
                                     overflow: 'hidden',
@@ -253,9 +301,36 @@ const EventSearch: React.FC = () => {
                                     alt={event.title}
                                 />
 
+                                {/* Date Badge - Top Left (comme les tendances) */}
+                                <div style={{
+                                    position: 'absolute',
+                                    top: 0,
+                                    left: 0,
+                                    background: 'white',
+                                    padding: '6px 10px',
+                                    borderBottomRightRadius: '16px',
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    alignItems: 'center',
+                                    minWidth: '44px',
+                                    color: '#1e293b',
+                                    boxShadow: '2px 2px 10px rgba(0,0,0,0.1)',
+                                    zIndex: 10
+                                }}>
+                                    <span style={{ fontSize: '14px', fontWeight: '900', lineHeight: '1' }}>
+                                        {event.date.getDate()}
+                                    </span>
+                                    <span style={{ fontSize: '9px', fontWeight: '800', textTransform: 'uppercase' }}>
+                                        {event.date.toLocaleDateString(i18n.language === 'fr' ? 'fr-FR' : 'en-US', { month: 'short' })}
+                                    </span>
+                                    <span style={{ fontSize: '8px', fontWeight: '700', opacity: 0.7 }}>
+                                        {event.time}
+                                    </span>
+                                </div>
+
                                 {/* Chat Icon Overlay */}
                                 {(() => {
-                                    const associatedGroup = groups.find(g => g.eventId === event.id);
+                                    const associatedGroup = groupsByEventId.get(event.id);
                                     if (!associatedGroup) return null;
 
                                     const kicked = isKicked(associatedGroup.id);
@@ -377,37 +452,46 @@ const EventSearch: React.FC = () => {
                                         background: 'var(--color-surface)',
                                         backdropFilter: 'blur(4px)',
                                         borderRadius: '16px',
-                                        padding: '10px 12px',
-                                        display: 'flex',
-                                        justifyContent: 'space-between',
-                                        alignItems: 'center'
+                                        padding: '10px 12px'
                                     }}>
-                                        <div style={{ overflow: 'hidden' }}>
-                                            <h4 style={{ fontSize: '12px', fontWeight: '700', color: 'var(--color-text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                                                {event.title}
-                                            </h4>
-                                            {(() => {
-                                                const shouldHide = event.hideAddressUntilRegistered && !event.registered && !event.isOrganizer;
-                                                return (
-                                                    <span style={{
-                                                        fontSize: '10px',
-                                                        color: 'var(--color-text-muted)',
-                                                        filter: shouldHide ? 'blur(4px)' : 'none'
-                                                    }}>
-                                                        {shouldHide ? t('events.locationHidden') : event.location.split(',')[0]}
-                                                    </span>
-                                                );
-                                            })()}
-                                        </div>
-                                        <div style={{ fontSize: '12px', fontWeight: '800', color: '#f97316' }}>
-                                            {event.date.toLocaleDateString(i18n.language === 'fr' ? 'fr-FR' : 'en-US', { day: 'numeric', month: 'short' })}
-                                        </div>
+                                        <h4 style={{ fontSize: '12px', fontWeight: '700', color: 'var(--color-text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', margin: 0 }}>
+                                            {event.title}
+                                        </h4>
+                                        {(() => {
+                                            const shouldHide = event.hideAddressUntilRegistered && !event.registered && !event.isOrganizer;
+                                            return (
+                                                <span style={{
+                                                    fontSize: '10px',
+                                                    color: 'var(--color-text-muted)',
+                                                    filter: shouldHide ? 'blur(4px)' : 'none'
+                                                }}>
+                                                    {shouldHide ? t('events.locationHidden') : event.location.split(',')[0]}
+                                                </span>
+                                            );
+                                        })()}
                                     </div>
                                 </div>
                             </div>
                         );
                     })}
                 </div>
+
+                {/* Sentinel pour charger plus d'éléments */}
+                {visibleCount < sortedEvents.length && (
+                    <div 
+                        ref={loadMoreRef} 
+                        style={{ 
+                            height: '50px', 
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            justifyContent: 'center',
+                            color: 'var(--color-text-muted)',
+                            fontSize: '14px'
+                        }}
+                    >
+                        {t('common.loading', 'Chargement...')}
+                    </div>
+                )}
 
             </div>
         </PageTransition>

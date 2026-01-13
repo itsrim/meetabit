@@ -1,7 +1,9 @@
 import React, { CSSProperties } from 'react';
 import { Virtuoso } from 'react-virtuoso';
-import { Heart, Lock } from 'lucide-react';
+import { Heart, Lock, Crown } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+import { toast } from 'sonner';
 import BlurImage from '../../BlurImage';
 import { SUGGESTIONS, Suggestion } from '../../../data/mockSuggestions';
 
@@ -12,6 +14,21 @@ interface SuggestionsTabProps {
 
 const SuggestionsTab: React.FC<SuggestionsTabProps> = ({ searchQuery, blurProfiles }) => {
     const navigate = useNavigate();
+    const { t } = useTranslation();
+
+    // Fonction pour naviguer vers un profil (avec vérification premium)
+    const navigateToProfile = (userId: number) => {
+        if (blurProfiles) {
+            toast.error(
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <Crown size={18} color="#fbbf24" />
+                    <span>{t('premium.profileRequired', 'Passez Premium pour voir les profils')}</span>
+                </div>
+            );
+            return;
+        }
+        navigate(`/user/${userId}`);
+    };
 
     const filteredSuggestions = SUGGESTIONS.filter(item =>
         item.name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -35,7 +52,7 @@ const SuggestionsTab: React.FC<SuggestionsTabProps> = ({ searchQuery, blurProfil
                 {items.map((item, i) => item && (
                     <div
                         key={item.id}
-                        onClick={() => !blurProfiles && navigate(`/user/${item.id}`)}
+                        onClick={() => navigateToProfile(item.id)}
                         style={{
                             flex: 1,
                             height: `${item.height}px`,
