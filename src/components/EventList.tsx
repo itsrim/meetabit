@@ -238,6 +238,7 @@ interface EventItem {
 }
 
 interface EventRow {
+    type: 'events' | 'dateSeparator';
     items: EventItem[];
     date: Date;
 }
@@ -331,22 +332,62 @@ const EventList: React.FC = () => {
         }
     }, [events, selectedDate]);
 
-    // Grouper les événements par paires (rows de 2)
+    // Grouper les événements par paires (rows de 2) avec séparateurs de date
     const rows: EventRow[] = useMemo(() => {
         const result: EventRow[] = [];
-        for (let i = 0; i < allItems.length; i += 2) {
-            const rowItems = allItems.slice(i, i + 2);
-            result.push({
-                items: rowItems,
-                date: rowItems[0]?.date || new Date()
-            });
+        let currentDate: Date | null = null;
+        let currentDayItems: EventItem[] = [];
+
+        const flushDayItems = () => {
+            // Créer des rows de 2 pour les items du jour courant
+            for (let i = 0; i < currentDayItems.length; i += 2) {
+                const rowItems = currentDayItems.slice(i, i + 2);
+                result.push({
+                    type: 'events',
+                    items: rowItems,
+                    date: rowItems[0]?.date || new Date()
+                });
+            }
+            currentDayItems = [];
+        };
+
+        allItems.forEach((item) => {
+            const itemDate = item.date;
+            const isNewDay = !currentDate || 
+                itemDate.getDate() !== currentDate.getDate() ||
+                itemDate.getMonth() !== currentDate.getMonth() ||
+                itemDate.getFullYear() !== currentDate.getFullYear();
+
+            if (isNewDay) {
+                // Flush les items du jour précédent
+                if (currentDayItems.length > 0) {
+                    flushDayItems();
+                }
+                // Ajouter un séparateur de date (sauf pour le premier jour)
+                if (currentDate !== null) {
+                    result.push({
+                        type: 'dateSeparator',
+                        items: [],
+                        date: itemDate
+                    });
+                }
+                currentDate = itemDate;
+            }
+            currentDayItems.push(item);
+        });
+
+        // Flush les derniers items
+        if (currentDayItems.length > 0) {
+            flushDayItems();
         }
+
         return result;
     }, [allItems]);
 
     // Mettre à jour la date visible et le calendrier quand on scrolle
     const handleVisibleItemsChanged = (range: { startIndex: number; endIndex: number }): void => {
         if (range.startIndex >= 0 && rows.length > 0) {
+            // Trouver le premier row visible (séparateur ou événements)
             const firstVisibleRow = rows[range.startIndex];
             if (firstVisibleRow && firstVisibleRow.date) {
                 const newDate = firstVisibleRow.date;
@@ -409,27 +450,50 @@ const EventList: React.FC = () => {
                             initialTopMostItemIndex={initialIndex}
                             rangeChanged={handleVisibleItemsChanged}
                             itemContent={(index, row) => (
-                                <div style={{ 
-                                    display: 'grid', 
-                                    gridTemplateColumns: 'repeat(2, 1fr)', 
-                                    gap: '10px',
-                                    padding: '5px 12px',
-                                    paddingBottom: index === rows.length - 1 ? '120px' : '5px',
-                                    height: '160px'
-                                }}>
-                                    {row.items.map((item) => (
-                                        <EventCard
-                                            key={item.id}
-                                            event={item.event}
-                                            onToggle={toggleRegistration}
-                                            onToggleFavorite={toggleFavorite}
-                                            isLast={false}
-                                            featureFlags={featureFlags}
-                                            registrationCount={registrationCount}
-                                            favoriteCount={favoriteCount}
-                                        />
-                                    ))}
-                                </div>
+                                row.type === 'dateSeparator' ? (
+                                    // Séparateur de date entre les jours
+                                    <div style={{
+                                        padding: '16px 16px 8px',
+                                        textAlign: 'center'
+                                    }}>
+                                        <div style={{
+                                            display: 'inline-block',
+                                            background: 'var(--color-primary)',
+                                            color: 'white',
+                                            padding: '8px 20px',
+                                            borderRadius: '20px',
+                                            fontSize: '14px',
+                                            fontWeight: '700',
+                                            textTransform: 'capitalize',
+                                            boxShadow: '0 4px 12px rgba(99, 102, 241, 0.3)'
+                                        }}>
+                                            {row.date.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}
+                                        </div>
+                                    </div>
+                                ) : (
+                                    // Row d'événements (2 par ligne)
+                                    <div style={{ 
+                                        display: 'grid', 
+                                        gridTemplateColumns: 'repeat(2, 1fr)', 
+                                        gap: '10px',
+                                        padding: '5px 12px',
+                                        paddingBottom: index === rows.length - 1 ? '120px' : '5px',
+                                        height: '160px'
+                                    }}>
+                                        {row.items.map((item) => (
+                                            <EventCard
+                                                key={item.id}
+                                                event={item.event}
+                                                onToggle={toggleRegistration}
+                                                onToggleFavorite={toggleFavorite}
+                                                isLast={false}
+                                                featureFlags={featureFlags}
+                                                registrationCount={registrationCount}
+                                                favoriteCount={favoriteCount}
+                                            />
+                                        ))}
+                                    </div>
+                                )
                             )}
                         />
                     ) : (
